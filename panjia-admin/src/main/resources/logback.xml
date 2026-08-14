@@ -72,14 +72,12 @@
     </appender>
 	
 	<!-- 系统模块日志级别控制  -->
-	<logger name="com.ruoyi" level="info" />
+	<logger name="com.panjia" level="info" />
 	<!-- Spring日志级别控制  -->
 	<logger name="org.springframework" level="warn" />
 	<!-- Thymeleaf日志级别控制  -->
 	<Logger name="org.thymeleaf" level="error"/>
-	<!-- springdoc日志级别控制  -->
-	<logger name="org.springdoc" level="error" />
-	<!-- BeanPostProcessorChecker日志级别控制 -->
+	<!-- BeanPostProcessorChecker日志级别控制  -->
 	<logger name="org.springframework.context.support.PostProcessorRegistrationDelegate$BeanPostProcessorChecker" level="error" />
 
 	<root level="info">

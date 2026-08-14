@@ -29,8 +29,6 @@
         <oshi.version>7.3.0</oshi.version>
         <commons.io.version>2.22.0</commons.io.version>
         <poi.version>4.1.2</poi.version>
-        <velocity.version>2.3</velocity.version>
-        <springdoc.version>3.0.3</springdoc.version>
     </properties>
 
     <!-- 依赖声明 -->
@@ -132,13 +130,6 @@
                 <version>${oshi.version}</version>
             </dependency>
 
-            <!-- spring-doc -->
-            <dependency>
-                <groupId>org.springdoc</groupId>
-                <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
-                <version>${springdoc.version}</version>
-            </dependency>
-
             <!-- io常用工具类 -->
             <dependency>
                 <groupId>commons-io</groupId>
@@ -151,13 +142,6 @@
                 <groupId>org.apache.poi</groupId>
                 <artifactId>poi-ooxml</artifactId>
                 <version>${poi.version}</version>
-            </dependency>
-
-            <!-- velocity代码生成使用模板 -->
-            <dependency>
-                <groupId>org.apache.velocity</groupId>
-                <artifactId>velocity-engine-core</artifactId>
-                <version>${velocity.version}</version>
             </dependency>
 
             <!-- 阿里JSON解析器 -->
