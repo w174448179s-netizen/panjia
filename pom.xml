@@ -199,11 +199,11 @@
     </dependencyManagement>
 
     <modules>
-        <module>ruoyi-admin</module>
-        <module>ruoyi-framework</module>
-        <module>ruoyi-system</module>
-        <module>ruoyi-quartz</module>
-        <module>ruoyi-common</module>
+        <module>panjia-admin</module>
+        <module>panjia-framework</module>
+        <module>panjia-system</module>
+        <module>panjia-quartz</module>
+        <module>panjia-common</module>
     </modules>
     <packaging>pom</packaging>
 
