@@ -15,7 +15,7 @@ import com.ruoyi.common.utils.StringUtils;
 /**
  * csrf过滤器
  * 
- * @author ruoyi
+ * @author panjia
  */
 public class CsrfValidateFilter extends AccessControlFilter
 {

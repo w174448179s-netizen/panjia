@@ -14,7 +14,7 @@
     <link th:href="@{/css/animate.min.css}" rel="stylesheet"/>
     <link th:href="@{/css/style.min.css}" rel="stylesheet"/>
     <link th:href="@{/css/skins.css}" rel="stylesheet"/>
-    <link th:href="@{/ruoyi/css/ry-ui.css?v=4.8.3}" rel="stylesheet"/>
+    <link th:href="@{/panjia/css/panjia-ui.css?v=4.8.3}" rel="stylesheet"/>
     <style type="text/css">#noticeItems li a{transition:background .15s;border-radius:2px}#noticeItems li a:hover{background:#f7f9fb;text-decoration:none}#noticeItems li a:active{background:#eef2f7}#noticeItems li a:focus{background:transparent;outline:0}#noticeList .mark-all-read{font-size:12px;color:#5b9bd5;text-decoration:none;padding:2px 8px;border-radius:3px;transition:background 0.15s}#noticeList .mark-all-read:hover{background:#eef5fc;color:#2b7cc1}#noticeList .mark-all-read:active{background:#eef5fc;color:#2b7cc1}#noticeList .mark-all-read:focus{outline:none;background:transparent}
 </style>
 </head>
@@ -154,7 +154,7 @@
         <a id="ax_close_max" class="ax_close_max" href="javascript:;" title="关闭全屏"> <i class="fa fa-times-circle-o"></i> </a>
 
         <div class="row mainContent" id="content-main" th:classappend="${mainClass}">
-            <iframe class="RuoYi_iframe" name="iframe0" width="100%" height="100%" th:data-id="@{/system/main}"
+            <iframe class="panjia_iframe" name="iframe0" width="100%" height="100%" th:data-id="@{/system/main}"
                 frameborder="0" seamless></iframe>
         </div>
 
@@ -172,9 +172,9 @@
 <script th:src="@{/js/jquery.contextMenu.min.js}"></script>
 <script th:src="@{/ajax/libs/blockUI/jquery.blockUI.js}"></script>
 <script th:src="@{/ajax/libs/layer/layer.min.js}"></script>
-<script th:src="@{/ruoyi/js/ry-ui.js?v=4.8.3}"></script>
-<script th:src="@{/ruoyi/js/common.js?v=4.8.3}"></script>
-<script th:src="@{/ruoyi/index.js?v=20201208}"></script>
+<script th:src="@{/panjia/js/panjia-ui.js?v=4.8.3}"></script>
+<script th:src="@{/panjia/js/common.js?v=4.8.3}"></script>
+<script th:src="@{/panjia/index.js?v=20201208}"></script>
 <script th:src="@{/ajax/libs/fullscreen/jquery.fullscreen.js}"></script>
 <script th:inline="javascript">
 window.history.forward(1);
@@ -240,7 +240,7 @@ function tabActive() {
     var $mainTab = $('.menuTab[data-id="' + ctx + 'system/main"]');
     $mainTab.addClass('active');
     // 懒加载：首次激活首页时才设置 src 并显示
-    var $mainIframe = $('.mainContent .RuoYi_iframe[data-id="' + ctx + 'system/main"]');
+    var $mainIframe = $('.mainContent .panjia_iframe[data-id="' + ctx + 'system/main"]');
     if ($mainIframe.length) {
         openToCurrentTab($mainIframe[0]);
     }

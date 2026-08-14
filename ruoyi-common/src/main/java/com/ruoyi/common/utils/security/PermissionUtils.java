@@ -14,7 +14,7 @@ import com.ruoyi.common.utils.StringUtils;
 /**
  * permission 工具类
  * 
- * @author ruoyi
+ * @author panjia
  */
 public class PermissionUtils
 {

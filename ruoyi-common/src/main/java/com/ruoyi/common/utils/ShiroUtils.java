@@ -11,7 +11,7 @@ import com.ruoyi.common.core.domain.entity.SysUser;
 /**
  * shiro 工具类
  * 
- * @author ruoyi
+ * @author panjia
  */
 public class ShiroUtils
 {

@@ -3,8 +3,8 @@
         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.ruoyi</groupId>
-    <artifactId>ruoyi</artifactId>
+    <groupId>com.panjia</groupId>
+    <artifactId>panjia</artifactId>
     <version>0.1.0</version>
 
     <name>PanJia</name>
@@ -12,7 +12,7 @@
     <description>盘家房地产中介管理系统</description>
     
     <properties>
-        <ruoyi.version>0.1.0</ruoyi.version>
+        <panjia.version>0.1.0</panjia.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <java.version>17</java.version>
@@ -169,30 +169,30 @@
 
             <!-- 定时任务-->
             <dependency>
-                <groupId>com.ruoyi</groupId>
-                <artifactId>ruoyi-quartz</artifactId>
-                <version>${ruoyi.version}</version>
+                <groupId>com.panjia</groupId>
+                <artifactId>panjia-quartz</artifactId>
+                <version>${panjia.version}</version>
             </dependency>
 
             <!-- 核心模块-->
             <dependency>
-                <groupId>com.ruoyi</groupId>
-                <artifactId>ruoyi-framework</artifactId>
-                <version>${ruoyi.version}</version>
+                <groupId>com.panjia</groupId>
+                <artifactId>panjia-framework</artifactId>
+                <version>${panjia.version}</version>
             </dependency>
 
             <!-- 系统模块-->
             <dependency>
-                <groupId>com.ruoyi</groupId>
-                <artifactId>ruoyi-system</artifactId>
-                <version>${ruoyi.version}</version>
+                <groupId>com.panjia</groupId>
+                <artifactId>panjia-system</artifactId>
+                <version>${panjia.version}</version>
             </dependency>
 
             <!-- 通用工具-->
             <dependency>
-                <groupId>com.ruoyi</groupId>
-                <artifactId>ruoyi-common</artifactId>
-                <version>${ruoyi.version}</version>
+                <groupId>com.panjia</groupId>
+                <artifactId>panjia-common</artifactId>
+                <version>${panjia.version}</version>
             </dependency>
 
         </dependencies>

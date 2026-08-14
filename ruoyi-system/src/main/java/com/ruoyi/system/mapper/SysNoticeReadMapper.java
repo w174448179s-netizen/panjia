@@ -9,7 +9,7 @@ import com.ruoyi.system.domain.SysNoticeRead;
 /**
  * 公告已读记录 数据层
  *
- * @author ruoyi
+ * @author panjia
  */
 public interface SysNoticeReadMapper
 {

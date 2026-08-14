@@ -7,7 +7,7 @@ import com.ruoyi.system.domain.SysNotice;
 /**
  * 公告已读记录 服务层
  *
- * @author ruoyi
+ * @author panjia
  */
 public interface ISysNoticeReadService
 {

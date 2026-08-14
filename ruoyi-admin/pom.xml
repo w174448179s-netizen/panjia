@@ -3,13 +3,13 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
-        <artifactId>ruoyi</artifactId>
-        <groupId>com.ruoyi</groupId>
-        <version>4.8.3</version>
+        <artifactId>panjia</artifactId>
+        <groupId>com.panjia</groupId>
+        <version>0.1.0</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
     <packaging>jar</packaging>
-    <artifactId>ruoyi-admin</artifactId>
+    <artifactId>panjia-admin</artifactId>
 
     <description>
         web服务入口
@@ -38,14 +38,14 @@
 
         <!-- 核心模块-->
         <dependency>
-            <groupId>com.ruoyi</groupId>
-            <artifactId>ruoyi-framework</artifactId>
+            <groupId>com.panjia</groupId>
+            <artifactId>panjia-framework</artifactId>
         </dependency>
 
         <!-- 定时任务-->
         <dependency>
-            <groupId>com.ruoyi</groupId>
-            <artifactId>ruoyi-quartz</artifactId>
+            <groupId>com.panjia</groupId>
+            <artifactId>panjia-quartz</artifactId>
         </dependency>
 
     </dependencies>

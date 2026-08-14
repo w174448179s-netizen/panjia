@@ -44,7 +44,7 @@ import jakarta.servlet.Filter;
 /**
  * 权限配置加载
  * 
- * @author ruoyi
+ * @author panjia
  */
 @Configuration
 public class ShiroConfig
@@ -154,7 +154,7 @@ public class ShiroConfig
     @Bean
     public EhCacheManager getEhCacheManager()
     {
-        net.sf.ehcache.CacheManager cacheManager = net.sf.ehcache.CacheManager.getCacheManager("ruoyi");
+        net.sf.ehcache.CacheManager cacheManager = net.sf.ehcache.CacheManager.getCacheManager("panjia");
         EhCacheManager em = new EhCacheManager();
         if (StringUtils.isNull(cacheManager))
         {

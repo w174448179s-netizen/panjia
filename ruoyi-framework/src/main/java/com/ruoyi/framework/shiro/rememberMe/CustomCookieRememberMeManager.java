@@ -16,7 +16,7 @@ import com.ruoyi.framework.shiro.service.SysLoginService;
 /**
  * 自定义CookieRememberMeManager
  *
- * @author ruoyi
+ * @author panjia
  */
 public class CustomCookieRememberMeManager extends CookieRememberMeManager
 {

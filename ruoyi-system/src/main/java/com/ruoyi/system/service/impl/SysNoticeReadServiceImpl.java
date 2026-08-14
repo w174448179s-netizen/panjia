@@ -13,7 +13,7 @@ import com.ruoyi.system.service.ISysNoticeReadService;
 /**
  * 公告已读记录 服务层实现
  *
- * @author ruoyi
+ * @author panjia
  */
 @Service
 public class SysNoticeReadServiceImpl implements ISysNoticeReadService

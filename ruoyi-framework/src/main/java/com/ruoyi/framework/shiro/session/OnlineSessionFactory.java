@@ -19,7 +19,7 @@ import com.ruoyi.system.domain.SysUserOnline;
 /**
  * 自定义sessionFactory会话
  * 
- * @author ruoyi
+ * @author panjia
  */
 @Component
 public class OnlineSessionFactory implements SessionFactory

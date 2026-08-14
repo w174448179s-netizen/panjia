@@ -6,7 +6,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 /**
  * Ztree树结构实体类
  * 
- * @author ruoyi
+ * @author panjia
  */
 public class Ztree implements Serializable
 {

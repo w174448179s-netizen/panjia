@@ -7,7 +7,7 @@ import org.apache.commons.lang3.builder.ToStringStyle;
 /**
  * 公告已读记录表 sys_notice_read
  *
- * @author ruoyi
+ * @author panjia
  */
 public class SysNoticeRead
 {

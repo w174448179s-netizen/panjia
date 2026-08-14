@@ -12,7 +12,7 @@ import com.ruoyi.common.json.JSON;
 /**
  * 处理并记录日志文件
  * 
- * @author ruoyi
+ * @author panjia
  */
 public class LogUtils
 {

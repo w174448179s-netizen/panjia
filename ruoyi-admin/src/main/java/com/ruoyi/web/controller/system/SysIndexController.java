@@ -30,7 +30,7 @@ import com.ruoyi.system.service.ISysMenuService;
 /**
  * 首页 业务处理
  * 
- * @author ruoyi
+ * @author panjia
  */
 @Controller
 public class SysIndexController extends BaseController

@@ -10,7 +10,7 @@ import jakarta.servlet.http.HttpServletResponse;
 /**
  * Cookie工具类
  * 
- * @author ruoyi
+ * @author panjia
  */
 public class CookieUtils
 {

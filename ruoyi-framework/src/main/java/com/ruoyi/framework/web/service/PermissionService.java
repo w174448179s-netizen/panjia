@@ -11,9 +11,9 @@ import org.springframework.stereotype.Service;
 import com.ruoyi.common.utils.StringUtils;
 
 /**
- * RuoYi首创 js调用 thymeleaf 实现按钮权限可见性
+ * 盘家首创 js调用 thymeleaf 实现按钮权限可见性
  * 
- * @author ruoyi
+ * @author panjia
  */
 @Service("permission")
 public class PermissionService

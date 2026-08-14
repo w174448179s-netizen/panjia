@@ -7,7 +7,7 @@ import com.ruoyi.system.domain.SysUserOnline;
 /**
  * 在线用户 数据层
  * 
- * @author ruoyi
+ * @author panjia
  */
 public interface SysUserOnlineMapper
 {

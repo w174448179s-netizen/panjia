@@ -1,6 +1,6 @@
 /**
  * 首页方法封装处理
- * Copyright (c) 2019 ruoyi
+ * Copyright (c) 2026 PanJia
  */
 var isMobile = false;
 var sidebarHeight = isMobile ? '100%' : '96%';
@@ -73,9 +73,9 @@ function openToCurrentTab(obj) {
         $(obj).attr('src', $(obj).data('id'));
     }
     if (isScrollToTop) {
-        $(obj).show().siblings('.RuoYi_iframe').hide();
+        $(obj).show().siblings('.panjia_iframe').hide();
     } else {
-        $(obj).css({"visibility": "visible", "position": "static"}).siblings('.RuoYi_iframe').css({"visibility": "hidden", "position": "absolute", "left": "0", "top": "0"});
+        $(obj).css({"visibility": "visible", "position": "static"}).siblings('.panjia_iframe').css({"visibility": "hidden", "position": "absolute", "left": "0", "top": "0"});
     }
 }
 
@@ -162,7 +162,7 @@ $(function() {
             var currentId = $(element).data('id');
             syncMenuTab(currentId);
             // 显示tab对应的内容区
-            $('.RuoYi_iframe').each(function() {
+            $('.panjia_iframe').each(function() {
                 if ($(this).data('id') == currentId) {
                     openToCurrentTab(this);
                 }
@@ -294,7 +294,7 @@ $(function() {
                     $(this).addClass('active').siblings('.menuTab').removeClass('active');
                     scrollToTab(this);
                     // 显示tab对应的内容区
-                    $('.mainContent .RuoYi_iframe').each(function() {
+                    $('.mainContent .panjia_iframe').each(function() {
                         if ($(this).data('id') == dataUrl) {
                             openToCurrentTab(this);
                             return false;
@@ -314,11 +314,11 @@ $(function() {
             $('.menuTab').removeClass('active');
 
             // 添加选项卡对应的iframe
-            var str1 = '<iframe class="RuoYi_iframe" name="iframe' + dataIndex + '" width="100%" height="100%" src="' + dataUrl + '" frameborder="0" data-id="' + dataUrl + '" data-refresh="' + isRefresh + '" seamless></iframe>';
+            var str1 = '<iframe class="panjia_iframe" name="iframe' + dataIndex + '" width="100%" height="100%" src="' + dataUrl + '" frameborder="0" data-id="' + dataUrl + '" data-refresh="' + isRefresh + '" seamless></iframe>';
             if (isScrollToTop) {
-                $('.mainContent').find('iframe.RuoYi_iframe').hide();
+                $('.mainContent').find('iframe.panjia_iframe').hide();
             } else {
-                $('.mainContent').find('iframe.RuoYi_iframe').css({"visibility": "hidden", "position": "absolute", "left": "0", "top": "0"});
+                $('.mainContent').find('iframe.panjia_iframe').css({"visibility": "hidden", "position": "absolute", "left": "0", "top": "0"});
             }
             $('.mainContent').append(str1);
             
@@ -360,7 +360,7 @@ $(function() {
                 var activeId = $(this).parents('.menuTab').next('.menuTab:eq(0)').data('id');
                 $(this).parents('.menuTab').next('.menuTab:eq(0)').addClass('active');
 
-                $('.mainContent .RuoYi_iframe').each(function() {
+                $('.mainContent .panjia_iframe').each(function() {
                     if ($(this).data('id') == activeId) {
                         openToCurrentTab(this);
                         return false;
@@ -376,7 +376,7 @@ $(function() {
                 $(this).parents('.menuTab').remove();
 
                 // 移除tab对应的内容区
-                $('.mainContent .RuoYi_iframe').each(function() {
+                $('.mainContent .panjia_iframe').each(function() {
                     if ($(this).data('id') == closeTabId) {
                         $(this).remove();
                         return false;
@@ -388,7 +388,7 @@ $(function() {
             if ($(this).parents('.menuTab').prev('.menuTab').length) {
                 var activeId = $(this).parents('.menuTab').prev('.menuTab:last').data('id');
                 $(this).parents('.menuTab').prev('.menuTab:last').addClass('active');
-                $('.mainContent .RuoYi_iframe').each(function() {
+                $('.mainContent .panjia_iframe').each(function() {
                     if ($(this).data('id') == activeId) {
                         openToCurrentTab(this);
                         return false;
@@ -399,7 +399,7 @@ $(function() {
                 $(this).parents('.menuTab').remove();
 
                 // 移除tab对应的内容区
-                $('.mainContent .RuoYi_iframe').each(function() {
+                $('.mainContent .panjia_iframe').each(function() {
                     if ($(this).data('id') == closeTabId) {
                         $(this).remove();
                         return false;
@@ -408,7 +408,7 @@ $(function() {
 
                 if ($.common.isNotEmpty(panelUrl)) {
             		$('.menuTab[data-id="' + panelUrl + '"]').addClass('active').siblings('.menuTab').removeClass('active');
-            		$('.mainContent .RuoYi_iframe').each(function() {
+            		$('.mainContent .panjia_iframe').each(function() {
                         if ($(this).data('id') == panelUrl) {
                             openToCurrentTab(this);
                             return false;
@@ -423,7 +423,7 @@ $(function() {
             $(this).parents('.menuTab').remove();
 
             // 移除相应tab对应的内容区
-            $('.mainContent .RuoYi_iframe').each(function() {
+            $('.mainContent .panjia_iframe').each(function() {
                 if ($(this).data('id') == closeTabId) {
                     $(this).remove();
                     return false;
@@ -450,7 +450,7 @@ $(function() {
             var isRefresh = false;
             syncMenuTab(currentId);
             // 显示tab对应的内容区
-            $('.mainContent .RuoYi_iframe').each(function() {
+            $('.mainContent .panjia_iframe').each(function() {
                 if ($(this).data('id') == currentId) {
                     openToCurrentTab(this);
                     isRefresh = $.common.nullToDefault($(this).data('refresh'), false);
@@ -471,7 +471,7 @@ $(function() {
     // 刷新iframe
     function refreshTab() {
     	var currentId = $('.page-tabs-content').find('.active').attr('data-id');
-    	var target = $('.RuoYi_iframe[data-id="' + currentId + '"]');
+    	var target = $('.panjia_iframe[data-id="' + currentId + '"]');
         var url = target.attr('src');
     	target.attr('src', url).ready();
     }
@@ -479,7 +479,7 @@ $(function() {
     // 页签全屏
     function fullScreenTab() {
     	var currentId = $('.page-tabs-content').find('.active').attr('data-id');
-    	var target = $('.RuoYi_iframe[data-id="' + currentId + '"]');
+    	var target = $('.panjia_iframe[data-id="' + currentId + '"]');
     	target.fullScreen(true);
     }
 
@@ -491,7 +491,7 @@ $(function() {
     //关闭其他选项卡
     function tabCloseOther() {
         $('.page-tabs-content').children("[data-id]").not(":first").not(".active").each(function() {
-            $('.RuoYi_iframe[data-id="' + $(this).data('id') + '"]').remove();
+            $('.panjia_iframe[data-id="' + $(this).data('id') + '"]').remove();
             $(this).remove();
         });
         $('.page-tabs-content').animate({ marginLeft: '0px' }, "fast");
@@ -500,14 +500,14 @@ $(function() {
     // 关闭全部选项卡
     function tabCloseAll() {
     	$('.page-tabs-content').children("[data-id]").not(":first").each(function() {
-            $('.RuoYi_iframe[data-id="' + $(this).data('id') + '"]').remove();
+            $('.panjia_iframe[data-id="' + $(this).data('id') + '"]').remove();
             $(this).remove();
         });
         $('.page-tabs-content').children("[data-id]:first").each(function() {
             if (isScrollToTop) {
-                $('.RuoYi_iframe[data-id="' + $(this).data('id') + '"]').show();
+                $('.panjia_iframe[data-id="' + $(this).data('id') + '"]').show();
             } else {
-                $('.RuoYi_iframe[data-id="' + $(this).data('id') + '"]').css({"visibility": "visible", "position": "static"});
+                $('.panjia_iframe[data-id="' + $(this).data('id') + '"]').css({"visibility": "visible", "position": "static"});
             }
             $(this).addClass("active");
         });
@@ -611,7 +611,7 @@ $(function() {
                         if ($(this).hasClass('active')) {
                             setActiveTab(this);
                         }
-                        $('.RuoYi_iframe[data-id="' + $(this).data('id') + '"]').remove();
+                        $('.panjia_iframe[data-id="' + $(this).data('id') + '"]').remove();
                         $(this).remove();
                     });
                     $('.page-tabs-content').animate({ marginLeft: '0px' }, "fast");
@@ -623,7 +623,7 @@ $(function() {
                 callback: function(key, opt) {
                     setActiveTab(this);
                     this.nextAll('.menuTab').each(function() {
-                        $('.RuoYi_iframe[data-id="' + $(this).data('id') + '"]').remove();
+                        $('.panjia_iframe[data-id="' + $(this).data('id') + '"]').remove();
                         $(this).remove();
                     });
                 }
@@ -641,7 +641,7 @@ $(function() {
                 icon: "fa-arrows-alt",
                 callback: function(key, opt) {
                     setActiveTab(this);
-                    var target = $('.RuoYi_iframe[data-id="' + this.data('id') + '"]');
+                    var target = $('.panjia_iframe[data-id="' + this.data('id') + '"]');
                     target.fullScreen(true);
                 }
             },
@@ -650,7 +650,7 @@ $(function() {
                 icon: "fa-refresh",
                 callback: function(key, opt) {
                     setActiveTab(this);
-                    var target = $('.RuoYi_iframe[data-id="' + this.data('id') + '"]');
+                    var target = $('.panjia_iframe[data-id="' + this.data('id') + '"]');
                     var url = target.attr('src');
                     $.modal.loading("数据加载中，请稍候...");
                     target.attr('src', url).on('load', function() {
@@ -662,7 +662,7 @@ $(function() {
                 name: "新窗口打开",
                 icon: "fa-link",
                 callback: function(key, opt) {
-                    var target = $('.RuoYi_iframe[data-id="' + this.data('id') + '"]');
+                    var target = $('.panjia_iframe[data-id="' + this.data('id') + '"]');
                     window.open(target.attr('src'));
                 }
             },

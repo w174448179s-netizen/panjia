@@ -12,7 +12,7 @@ import com.ruoyi.common.utils.DateUtils;
 /**
  * cron表达式工具类
  * 
- * @author ruoyi
+ * @author panjia
  *
  */
 public class CronUtils

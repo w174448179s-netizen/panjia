@@ -7,7 +7,7 @@ import jakarta.servlet.http.HttpServletRequest;
 /**
  * 获取IP方法
  * 
- * @author ruoyi
+ * @author panjia
  */
 public class IpUtils
 {

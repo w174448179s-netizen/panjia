@@ -20,7 +20,7 @@ import jakarta.annotation.PostConstruct;
 /**
  * 登录密码方法
  * 
- * @author ruoyi
+ * @author panjia
  */
 @Component
 public class SysPasswordService
