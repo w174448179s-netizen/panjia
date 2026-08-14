@@ -1,5 +1,6 @@
 package com.ruoyi.system.mapper;
 
+import java.util.Date;
 import java.util.List;
 import com.ruoyi.system.domain.SysUserOnline;
 
@@ -48,5 +49,5 @@ public interface SysUserOnlineMapper
      * @param lastAccessTime 过期时间
      * @return 会话集合
      */
-    public List<SysUserOnline> selectOnlineByExpired(String lastAccessTime);
+    public List<SysUserOnline> selectOnlineByExpired(Date lastAccessTime);
 }

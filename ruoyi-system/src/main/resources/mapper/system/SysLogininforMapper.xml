@@ -34,10 +34,10 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 				AND login_name like concat('%', #{loginName}, '%')
 			</if>
 			<if test="params.beginTime != null and params.beginTime != ''"><!-- 开始时间检索 -->
-				AND login_time &gt;= #{params.beginTime}
+				AND login_time &gt;= to_timestamp(#{params.beginTime},'YYYY-MM-DD HH24:MI:SS')
 			</if>
 			<if test="params.endTime != null and params.endTime != ''"><!-- 结束时间检索 -->
-				AND login_time &lt;= #{params.endTime}
+				AND login_time &lt;= to_timestamp(#{params.endTime},'YYYY-MM-DD HH24:MI:SS')
 			</if>
 		</where>
 	</select>
