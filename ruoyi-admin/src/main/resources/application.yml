@@ -1,13 +1,13 @@
 # 项目相关配置
 ruoyi:
   # 名称
-  name: RuoYi
+  name: PanJia
   # 版本
-  version: 4.8.3
+  version: 0.1.0
   # 版权年份
   copyrightYear: 2026
   # 实例演示开关
-  demoEnabled: true
+  demoEnabled: false
   # 文件路径 示例（ Windows配置D:/ruoyi/uploadPath，Linux配置 /home/ruoyi/uploadPath）
   profile: /Users/shengwei/workspace
   # 获取ip地址开关
@@ -132,9 +132,9 @@ springdoc:
     tags-sorter: alpha
   group-configs:
     - group: 'default'
-      display-name: '测试模块'
+      display-name: '系统接口'
       paths-to-match: '/**'
-      packages-to-scan: com.ruoyi.web.controller.tool
+      packages-to-scan: com.ruoyi.web.controller
 
 # 防止XSS攻击
 xss:

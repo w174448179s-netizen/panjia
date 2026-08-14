@@ -35,16 +35,16 @@ comment on column sys_dept.create_time is '创建时间';
 comment on column sys_dept.update_by is '更新者';
 comment on column sys_dept.update_time is '更新时间';
 
-insert into sys_dept values(100,  0,   '0',          '若依科技',   0, '若依', '15888888888', 'ry@qq.com', '0', '0', 'admin', now(), '', null);
-insert into sys_dept values(101,  100, '0,100',      '深圳总公司', 1, '若依', '15888888888', 'ry@qq.com', '0', '0', 'admin', now(), '', null);
-insert into sys_dept values(102,  100, '0,100',      '长沙分公司', 2, '若依', '15888888888', 'ry@qq.com', '0', '0', 'admin', now(), '', null);
-insert into sys_dept values(103,  101, '0,100,101',  '研发部门',   1, '若依', '15888888888', 'ry@qq.com', '0', '0', 'admin', now(), '', null);
-insert into sys_dept values(104,  101, '0,100,101',  '市场部门',   2, '若依', '15888888888', 'ry@qq.com', '0', '0', 'admin', now(), '', null);
-insert into sys_dept values(105,  101, '0,100,101',  '测试部门',   3, '若依', '15888888888', 'ry@qq.com', '0', '0', 'admin', now(), '', null);
-insert into sys_dept values(106,  101, '0,100,101',  '财务部门',   4, '若依', '15888888888', 'ry@qq.com', '0', '0', 'admin', now(), '', null);
-insert into sys_dept values(107,  101, '0,100,101',  '运维部门',   5, '若依', '15888888888', 'ry@qq.com', '0', '0', 'admin', now(), '', null);
-insert into sys_dept values(108,  102, '0,100,102',  '市场部门',   1, '若依', '15888888888', 'ry@qq.com', '0', '0', 'admin', now(), '', null);
-insert into sys_dept values(109,  102, '0,100,102',  '财务部门',   2, '若依', '15888888888', 'ry@qq.com', '0', '0', 'admin', now(), '', null);
+insert into sys_dept values(100,  0,   '0',          '盘家',       0, '盘家', '15888888888', 'panjia@example.com', '0', '0', 'admin', now(), '', null);
+insert into sys_dept values(101,  100, '0,100',      '总部',       1, '盘家', '15888888888', 'panjia@example.com', '0', '0', 'admin', now(), '', null);
+insert into sys_dept values(102,  100, '0,100',      '分部',       2, '盘家', '15888888888', 'panjia@example.com', '0', '0', 'admin', now(), '', null);
+insert into sys_dept values(103,  101, '0,100,101',  '运营部',     1, '盘家', '15888888888', 'panjia@example.com', '0', '0', 'admin', now(), '', null);
+insert into sys_dept values(104,  101, '0,100,101',  '市场部',     2, '盘家', '15888888888', 'panjia@example.com', '0', '0', 'admin', now(), '', null);
+insert into sys_dept values(105,  101, '0,100,101',  '行政部',     3, '盘家', '15888888888', 'panjia@example.com', '0', '0', 'admin', now(), '', null);
+insert into sys_dept values(106,  101, '0,100,101',  '财务部',     4, '盘家', '15888888888', 'panjia@example.com', '0', '0', 'admin', now(), '', null);
+insert into sys_dept values(107,  101, '0,100,101',  '技术部',     5, '盘家', '15888888888', 'panjia@example.com', '0', '0', 'admin', now(), '', null);
+insert into sys_dept values(108,  102, '0,100,102',  '市场部',     1, '盘家', '15888888888', 'panjia@example.com', '0', '0', 'admin', now(), '', null);
+insert into sys_dept values(109,  102, '0,100,102',  '财务部',     2, '盘家', '15888888888', 'panjia@example.com', '0', '0', 'admin', now(), '', null);
 select setval(pg_get_serial_sequence('sys_dept', 'dept_id'), (select max(dept_id) from sys_dept));
 
 
@@ -99,8 +99,7 @@ comment on column sys_user.update_by is '更新者';
 comment on column sys_user.update_time is '更新时间';
 comment on column sys_user.remark is '备注';
 
-insert into sys_user values(1,  103, 'admin', '若依', '00', 'ry@163.com', '15888888888', '1', '', '29c67a30398638269fe600f73a054934', '111111', '0', '0', '127.0.0.1', null, null, 'admin', now(), '', null, '管理员');
-insert into sys_user values(2,  105, 'ry',    '若依', '00', 'ry@qq.com',  '15666666666', '1', '', '8e6d98b90472783cc73c17047ddccf36', '222222', '0', '0', '127.0.0.1', null, null, 'admin', now(), '', null, '测试员');
+insert into sys_user values(1,  103, 'admin', '系统管理员', '00', 'admin@panjia.com', '15888888888', '1', '', '29c67a30398638269fe600f73a054934', '111111', '0', '0', '127.0.0.1', null, null, 'admin', now(), '', null, '管理员');
 select setval(pg_get_serial_sequence('sys_user', 'user_id'), (select max(user_id) from sys_user));
 
 
@@ -223,7 +222,6 @@ comment on column sys_menu.remark is '备注';
 insert into sys_menu values('1', '系统管理', '0', '1', '#', '', 'M', '0', '1', '', 'fa fa-gear', 'admin', now(), '', null, '系统管理目录');
 insert into sys_menu values('2', '系统监控', '0', '2', '#', '', 'M', '0', '1', '', 'fa fa-video-camera', 'admin', now(), '', null, '系统监控目录');
 insert into sys_menu values('3', '系统工具', '0', '3', '#', '', 'M', '0', '1', '', 'fa fa-bars', 'admin', now(), '', null, '系统工具目录');
-insert into sys_menu values('4', '若依官网', '0', '4', 'http://ruoyi.vip', 'menuBlank', 'C', '0', '1', '', 'fa fa-location-arrow', 'admin', now(), '', null, '若依官网地址');
 insert into sys_menu values('100', '用户管理', '1', '1', '/system/user', '', 'C', '0', '1', 'system:user:view', 'fa fa-user-o', 'admin', now(), '', null, '用户管理菜单');
 insert into sys_menu values('101', '角色管理', '1', '2', '/system/role', '', 'C', '0', '1', 'system:role:view', 'fa fa-user-secret', 'admin', now(), '', null, '角色管理菜单');
 insert into sys_menu values('102', '菜单管理', '1', '3', '/system/menu', '', 'C', '0', '1', 'system:menu:view', 'fa fa-th-list', 'admin', now(), '', null, '菜单管理菜单');
@@ -320,7 +318,6 @@ comment on column sys_user_role.user_id is '用户ID';
 comment on column sys_user_role.role_id is '角色ID';
 
 insert into sys_user_role values ('1', '1');
-insert into sys_user_role values ('2', '2');
 
 
 -- ----------------------------
@@ -339,7 +336,6 @@ comment on column sys_role_menu.menu_id is '菜单ID';
 insert into sys_role_menu values ('2', '1');
 insert into sys_role_menu values ('2', '2');
 insert into sys_role_menu values ('2', '3');
-insert into sys_role_menu values ('2', '4');
 insert into sys_role_menu values ('2', '100');
 insert into sys_role_menu values ('2', '101');
 insert into sys_role_menu values ('2', '102');
@@ -354,9 +350,7 @@ insert into sys_role_menu values ('2', '110');
 insert into sys_role_menu values ('2', '111');
 insert into sys_role_menu values ('2', '112');
 insert into sys_role_menu values ('2', '113');
-insert into sys_role_menu values ('2', '114');
 insert into sys_role_menu values ('2', '115');
-insert into sys_role_menu values ('2', '116');
 insert into sys_role_menu values ('2', '500');
 insert into sys_role_menu values ('2', '501');
 insert into sys_role_menu values ('2', '1000');
@@ -456,7 +450,6 @@ comment on column sys_user_post.user_id is '用户ID';
 comment on column sys_user_post.post_id is '岗位ID';
 
 insert into sys_user_post values ('1', '1');
-insert into sys_user_post values ('2', '2');
 
 
 -- ----------------------------
@@ -656,9 +649,8 @@ insert into sys_config values(4, '用户账号密码最小长度', 'sys.user.ini
 insert into sys_config values(5, '用户账号密码最大长度', 'sys.user.initPassword.maxLength',   '20',             'Y', 'admin', now(), '', null, '用户账号密码最大长度');
 insert into sys_config values(6, '账号初始密码',         'sys.user.initPassword',             '123456',         'Y', 'admin', now(), '', null, '账号初始密码');
 insert into sys_config values(7, '主框架页-系统Logo',    'sys.index.logo',                    '/logo.png',      'Y', 'admin', now(), '', null, '主框架页-系统Logo');
-insert into sys_config values(8, '主框架页-主标题',      'sys.index.title',                   '若依管理系统',    'Y', 'admin', now(), '', null, '主框架页-主标题');
-insert into sys_config values(9, '主框架页-副标题',      'sys.index.subTitle',                '后台管理系统',    'Y', 'admin', now(), '', null, '主框架页-副标题');
-insert into sys_config values(10, '业务流程是否自动结束', 'sys.business.flowAutoEnd',          'Y',              'N', 'admin', now(), '', null, '业务流程是否自动结束');
+insert into sys_config values(8, '主框架页-主标题',      'sys.index.title',                   '盘家管理系统',    'Y', 'admin', now(), '', null, '主框架页-主标题');
+insert into sys_config values(9, '主框架页-副标题',      'sys.index.subTitle',                '房地产中介管理系统',    'Y', 'admin', now(), '', null, '主框架页-副标题');
 select setval(pg_get_serial_sequence('sys_config', 'config_id'), (select max(config_id) from sys_config));
 
 
@@ -691,8 +683,6 @@ comment on column sys_notice.update_by is '更新者';
 comment on column sys_notice.update_time is '更新时间';
 comment on column sys_notice.remark is '备注';
 
-insert into sys_notice values (1, '温馨提醒：2018-07-01 若依正式发布v4.0版本', '2', '## 新版本内容\r\n- 全新界面，全新体验\r\n- 支持移动端适配\r\n- 优化性能，提升速度', '0', 'admin', now(), '', null, '');
-insert into sys_notice values (2, '感恩回馈，若依捐赠感谢名单！', '1', '## 感谢名单\r\n感谢各位朋友的支持和捐赠！', '0', 'admin', now(), '', null, '');
 select setval(pg_get_serial_sequence('sys_notice', 'notice_id'), (select max(notice_id) from sys_notice));
 
 
@@ -763,13 +753,6 @@ comment on column sys_job.update_by is '更新者';
 comment on column sys_job.update_time is '更新时间';
 comment on column sys_job.remark is '备注信息';
 
-insert into sys_job values(1, '系统内置（index）', 'DEFAULT', 'ryTask.index()',    '0/10 * * * * ?', '3', '1', '1', 'admin', now(), '', null, '');
-insert into sys_job values(2, '系统内置（sync）',  'DEFAULT', 'ryTask.sync()',     '0/30 * * * * ?', '3', '1', '1', 'admin', now(), '', null, '');
-insert into sys_job values(3, '系统内置（contractExpire）', 'DEFAULT', 'contractTask.contractExpire()', '0 0 0 * * ?', '3', '1', '1', 'admin', now(), '', null, '');
-insert into sys_job values(4, '系统内置（carWashNoAppointment）', 'DEFAULT', 'appointmentTask.carWashNoAppointment()', '0 0 9 ? * MON', '3', '1', '1', 'admin', now(), '', null, '');
-insert into sys_job values(5, '系统内置（carWashNoUse）', 'DEFAULT', 'appointmentTask.carWashNoUse()', '0 0 10 ? * MON', '3', '1', '1', 'admin', now(), '', null, '');
-insert into sys_job values(6, '系统内置（memberNoAppointment）', 'DEFAULT', 'appointmentTask.memberNoAppointment()', '0 0 8 ? * MON', '3', '1', '1', 'admin', now(), '', null, '');
-insert into sys_job values(7, '系统内置（memberNoUse）', 'DEFAULT', 'appointmentTask.memberNoUse()', '0 0 11 ? * MON', '3', '1', '1', 'admin', now(), '', null, '');
 select setval(pg_get_serial_sequence('sys_job', 'job_id'), (select max(job_id) from sys_job));
 
 
