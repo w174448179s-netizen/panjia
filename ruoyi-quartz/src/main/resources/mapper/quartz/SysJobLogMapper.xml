@@ -38,10 +38,10 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 				AND invoke_target like concat('%', #{invokeTarget}, '%')
 			</if>
 			<if test="params.beginTime != null and params.beginTime != ''"><!-- 开始时间检索 -->
-				and date_format(create_time,'%Y%m%d') &gt;= date_format(#{params.beginTime},'%Y%m%d')
+				and to_char(create_time,'YYYYMMDD') &gt;= to_char(#{params.beginTime},'YYYYMMDD')
 			</if>
 			<if test="params.endTime != null and params.endTime != ''"><!-- 结束时间检索 -->
-				and date_format(create_time,'%Y%m%d') &lt;= date_format(#{params.endTime},'%Y%m%d')
+				and to_char(create_time,'YYYYMMDD') &lt;= to_char(#{params.endTime},'YYYYMMDD')
 			</if>
 		</where>
 		order by create_time desc
@@ -93,7 +93,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
  			<if test="exceptionInfo != null and exceptionInfo != ''">#{exceptionInfo},</if>
  			<if test="startTime != null">#{startTime},</if>
  			<if test="endTime != null">#{endTime},</if>
- 			sysdate()
+ 			now()
  		)
 	</insert>
 

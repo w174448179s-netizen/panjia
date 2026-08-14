@@ -1,0 +1,16 @@
+services:
+  postgres:
+    image: postgres:17
+    container_name: panjia-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: panjia
+      POSTGRES_USER: panjia
+      POSTGRES_PASSWORD: panjia_dev
+    ports:
+      - "5432:5432"
+    volumes:
+      - panjia-postgres-data:/var/lib/postgresql/data
+
+volumes:
+  panjia-postgres-data:
