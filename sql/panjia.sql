@@ -232,9 +232,6 @@ insert into sys_menu values('107', '通知公告', '1', '8', '/system/notice', '
 insert into sys_menu values('108', '日志管理', '1', '9', '#', '', 'M', '0', '1', '', 'fa fa-pencil-square-o', 'admin', now(), '', null, '日志管理菜单');
 insert into sys_menu values('109', '在线用户', '2', '1', '/monitor/online', '', 'C', '0', '1', 'monitor:online:view', 'fa fa-user-circle', 'admin', now(), '', null, '在线用户菜单');
 insert into sys_menu values('110', '定时任务', '2', '2', '/monitor/job', '', 'C', '0', '1', 'monitor:job:view', 'fa fa-tasks', 'admin', now(), '', null, '定时任务菜单');
-insert into sys_menu values('111', '数据监控', '2', '3', '/monitor/data', '', 'C', '0', '1', 'monitor:data:view', 'fa fa-bug', 'admin', now(), '', null, '数据监控菜单');
-insert into sys_menu values('112', '服务监控', '2', '4', '/monitor/server', '', 'C', '0', '1', 'monitor:server:view', 'fa fa-server', 'admin', now(), '', null, '服务监控菜单');
-insert into sys_menu values('113', '缓存监控', '2', '5', '/monitor/cache', '', 'C', '0', '1', 'monitor:cache:view', 'fa fa-cube', 'admin', now(), '', null, '缓存监控菜单');
 insert into sys_menu values('500', '操作日志', '108', '1', '/monitor/operlog', '', 'C', '0', '1', 'monitor:operlog:view', 'fa fa-address-book', 'admin', now(), '', null, '操作日志菜单');
 insert into sys_menu values('501', '登录日志', '108', '2', '/monitor/logininfor', '', 'C', '0', '1', 'monitor:logininfor:view', 'fa fa-file-image-o', 'admin', now(), '', null, '登录日志菜单');
 insert into sys_menu values('1000', '用户查询', '100', '1', '#', '', 'F', '0', '1', 'system:user:list', '#', 'admin', now(), '', null, '');
@@ -339,9 +336,6 @@ insert into sys_role_menu values ('2', '107');
 insert into sys_role_menu values ('2', '108');
 insert into sys_role_menu values ('2', '109');
 insert into sys_role_menu values ('2', '110');
-insert into sys_role_menu values ('2', '111');
-insert into sys_role_menu values ('2', '112');
-insert into sys_role_menu values ('2', '113');
 insert into sys_role_menu values ('2', '500');
 insert into sys_role_menu values ('2', '501');
 insert into sys_role_menu values ('2', '1000');
@@ -401,11 +395,6 @@ insert into sys_role_menu values ('2', '1053');
 insert into sys_role_menu values ('2', '1054');
 insert into sys_role_menu values ('2', '1055');
 insert into sys_role_menu values ('2', '1056');
-insert into sys_role_menu values ('2', '1057');
-insert into sys_role_menu values ('2', '1058');
-insert into sys_role_menu values ('2', '1059');
-insert into sys_role_menu values ('2', '1060');
-insert into sys_role_menu values ('2', '1061');
 
 
 -- ----------------------------
