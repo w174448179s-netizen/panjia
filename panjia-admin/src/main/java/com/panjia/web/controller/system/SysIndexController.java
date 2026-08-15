@@ -133,6 +133,7 @@ public class SysIndexController extends BaseController
     public String main(ModelMap mmap)
     {
         mmap.put("version", PanJiaConfig.getVersion());
+        mmap.put("user", getSysUser());
         return "main";
     }
 
