@@ -55,7 +55,7 @@ function validateRule() {
         },
         messages: {
             username: {
-                required: icon + "请输入您的用户名",
+                required: icon + "请输入员工号",
             },
             password: {
                 required: icon + "请输入您的密码",
