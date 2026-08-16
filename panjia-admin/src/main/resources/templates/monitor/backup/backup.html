@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org" xmlns:shiro="http://www.pollix.at/thymeleaf/shiro">
+<head>
+	<th:block th:include="include :: header('数据库备份恢复')" />
+</head>
+<body class="gray-bg">
+    <div class="container-div">
+		<div class="row">
+			<!-- 备份说明 -->
+			<div class="col-sm-12">
+				<div style="background: linear-gradient(90deg,#1e293b,#0ea5e9);color:#fff;border-radius:10px;padding:16px 20px;margin-bottom:16px;box-shadow:0 4px 10px rgba(2,6,23,.08);">
+					<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+						<div>
+							<div style="font-size:16px;font-weight:600;margin-bottom:4px;"><i class="fa fa-database"></i>&nbsp; 数据库备份恢复</div>
+							<div style="font-size:12px;opacity:.85;">
+								一键 zip 打包 / 下载，上传 zip 即可换机迁移；恢复时默认 ON_ERROR_STOP=1 遇错即停。
+							</div>
+						</div>
+						<div style="font-size:12px;opacity:.9;">
+							默认保留 30 份，超过自动清理最旧
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<!-- 操作按钮 -->
+	        <div class="btn-group-sm" id="toolbar" role="group" style="margin-bottom:10px;">
+	            <a class="btn btn-primary" onclick="createBackup()" shiro:hasPermission="monitor:backup:create">
+	                <i class="fa fa-plus-circle"></i>&nbsp;立即备份
+	            </a>
+	            <a class="btn btn-success" onclick="showRestoreUpload()" shiro:hasPermission="monitor:backup:restore">
+	                <i class="fa fa-upload"></i>&nbsp;上传恢复（换机迁移）
+	            </a>
+	            <a class="btn btn-warning" onclick="$.table.refresh()">
+	                <i class="fa fa-refresh"></i>&nbsp;刷新
+	            </a>
+	        </div>
+
+			<!-- 上传恢复卡片 -->
+			<div id="restoreUploadCard" class="col-sm-12" style="display:none;margin-bottom:12px;">
+				<div style="background:#f8fafc;border:1px dashed #0ea5e9;border-radius:8px;padding:14px;">
+					<div style="font-weight:600;margin-bottom:8px;color:#0c4a6e;">
+						<i class="fa fa-exchange"></i>&nbsp;上传备份 zip 恢复（zip 内必须包含 panjia.sql）
+					</div>
+					<form id="restoreForm" enctype="multipart/form-data">
+						<input id="restoreFile" name="file" type="file" accept=".zip" style="display:inline-block;">
+						<button type="button" class="btn btn-success btn-sm" onclick="doRestoreUpload()" style="margin-left:8px;">
+							<i class="fa fa-play"></i>&nbsp;开始恢复
+						</button>
+						<button type="button" class="btn btn-default btn-sm" onclick="$('#restoreUploadCard').hide()" style="margin-left:4px;">取消</button>
+						<div style="margin-top:6px;font-size:12px;color:#475569;">
+							注意：恢复后所有数据将被覆盖，当前会话会立即失效，请重新登录。
+						</div>
+					</form>
+				</div>
+			</div>
+
+	        <div class="col-sm-12 select-table table-striped">
+			    <table id="bootstrap-table"></table>
+			</div>
+		</div>
+	</div>
+	<th:block th:include="include :: footer" />
+	<script th:inline="javascript">
+		var createFlag   = [[${@permission.hasPermi('monitor:backup:create')}]];
+		var downloadFlag = [[${@permission.hasPermi('monitor:backup:download')}]];
+		var removeFlag   = [[${@permission.hasPermi('monitor:backup:remove')}]];
+		var restoreFlag  = [[${@permission.hasPermi('monitor:backup:restore')}]];
+		var prefix = ctx + "monitor/backup";
+
+		$(function() {
+		    var options = {
+		        url: prefix + "/list",
+		        showRefresh: false,
+		        showSearch: false,
+		        showColumns: false,
+		        escape: true,
+		        columns: [
+		        {
+                    title: "序号",
+                    formatter: function (value, row, index) {
+                 	    return $.table.serialNumber(index);
+                    }
+                },
+		        {
+		            field: 'fileName',
+		            title: '备份文件',
+		            formatter: function(v, row, idx){
+		            	return $.table.tooltip(v);
+		            }
+		        },
+		        {
+		            field: 'sizeText',
+		            title: '大小',
+		            align: 'right',
+		            width: 100,
+		            sortable: true,
+		            formatter: function(v, row){ return v; }
+		        },
+		        {
+		            field: 'createdAt',
+		            title: '备份时间',
+		            sortable: true,
+		            width: 180
+		        },
+		        {
+		            title: '操作',
+		            align: 'center',
+		            formatter: function(value, row, index) {
+		                var actions = [];
+		                actions.push('<a class="btn btn-success btn-xs ' + downloadFlag + '" href="javascript:void(0)" onclick="downloadBackup(\''
+		                	+ row.fileName + '\')"><i class="fa fa-download"></i> 下载</a> ');
+		                actions.push('<a class="btn btn-primary btn-xs ' + restoreFlag + '" href="javascript:void(0)" onclick="restoreBackup(\''
+		                	+ row.fileName + '\')"><i class="fa fa-undo"></i> 恢复</a> ');
+		                actions.push('<a class="btn btn-danger btn-xs ' + removeFlag + '" href="javascript:void(0)" onclick="removeBackup(\''
+		                	+ row.fileName + '\')"><i class="fa fa-trash"></i> 删除</a> ');
+		                return actions.join('');
+		            }
+		        }]
+		    };
+		    $.table.init(options);
+		});
+
+		// 立即备份
+		function createBackup() {
+			$.modal.loading("正在生成备份，请稍候...", 0);
+			$.ajax({
+				url: prefix + "/create",
+				type: 'POST',
+				dataType: 'json',
+				success: function(res){
+					$.modal.closeLoading();
+					if(res && res.code == 0){
+						$.modal.msgSuccess(res.msg || "备份成功");
+						$.table.refresh();
+					}else{
+						$.modal.alertError((res && res.msg) || "备份失败");
+					}
+				},
+				error: function(){
+					$.modal.closeLoading();
+					$.modal.alertError("备份失败：网络异常");
+				}
+			});
+		}
+
+		function showRestoreUpload() {
+			$('#restoreUploadCard').toggle();
+		}
+
+		// 上传 zip 恢复
+		function doRestoreUpload() {
+			var input = document.getElementById('restoreFile');
+			if(!input.files || input.files.length === 0){
+				$.modal.alertWarning("请选择要恢复的 zip 文件");
+				return;
+			}
+			var f = input.files[0];
+			if(!/\.zip$/i.test(f.name)){
+				$.modal.alertWarning("仅支持 .zip 备份包");
+				return;
+			}
+			$.modal.confirm("上传恢复将覆盖当前数据库，确定继续？", function(){
+				$.modal.loading("正在恢复，请勿关闭页面...", 0);
+				var fd = new FormData();
+				fd.append('file', f);
+				$.ajax({
+					url: prefix + "/restoreUpload",
+					type: 'POST',
+					data: fd,
+					processData: false,
+					contentType: false,
+					dataType: 'json',
+					success: function(res){
+						$.modal.closeLoading();
+						if(res && res.code == 0){
+							$.modal.msgSuccess("恢复成功，2 秒后跳转到登录页");
+							setTimeout(function(){ location.href = ctx + "logout"; }, 2000);
+						}else{
+							$.modal.alertError((res && res.msg) || "恢复失败");
+						}
+					},
+					error: function(){
+						$.modal.closeLoading();
+						$.modal.alertError("恢复失败：网络异常");
+					}
+				});
+			});
+		}
+
+		// 恢复指定历史备份
+		function restoreBackup(fileName) {
+			$.modal.confirm("确定用备份 <b>" + fileName + "</b> 恢复数据库？当前数据将被覆盖！", function(){
+				$.modal.loading("正在恢复，请稍候...", 0);
+				$.ajax({
+					url: prefix + "/restore",
+					type: 'POST',
+					data: { fileName: fileName },
+					dataType: 'json',
+					success: function(res){
+						$.modal.closeLoading();
+						if(res && res.code == 0){
+							$.modal.msgSuccess("恢复成功，2 秒后跳转到登录页");
+							setTimeout(function(){ location.href = ctx + "logout"; }, 2000);
+						}else{
+							$.modal.alertError((res && res.msg) || "恢复失败");
+						}
+					},
+					error: function(){
+						$.modal.closeLoading();
+						$.modal.alertError("恢复失败：网络异常");
+					}
+				});
+			});
+		}
+
+		// 删除
+		function removeBackup(fileName) {
+			$.modal.confirm("确定删除备份 " + fileName + " 吗？", function(){
+				$.operate.post(prefix + "/remove", { fileName: fileName });
+			});
+		}
+
+		// 下载（浏览器直接 GET）
+		function downloadBackup(fileName) {
+			var url = prefix + "/download?fileName=" + encodeURIComponent(fileName);
+			// 构造 <a> 触发下载
+			var a = document.createElement('a');
+			a.href = url;
+			a.download = fileName;
+			document.body.appendChild(a);
+			a.click();
+			document.body.removeChild(a);
+		}
+	</script>
+</body>
+</html>

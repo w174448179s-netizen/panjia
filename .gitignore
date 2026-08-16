@@ -44,3 +44,8 @@ nbdist/
 !*/build/*.java
 !*/build/*.html
 !*/build/*.xml
+
+dbbackup/
+.vscode/
+.github/
+.DS_Store

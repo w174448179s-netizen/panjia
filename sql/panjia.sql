@@ -245,6 +245,7 @@ insert into sys_menu values('106', '参数设置', '1', '7', '/system/config', '
 insert into sys_menu values('108', '日志管理', '1', '9', '#', '', 'M', '0', '1', '', 'fa fa-pencil-square-o', '0001', now(), '', null, '日志管理菜单');
 insert into sys_menu values('109', '在线用户', '2', '1', '/monitor/online', '', 'C', '0', '1', 'monitor:online:view', 'fa fa-user-circle', '0001', now(), '', null, '在线用户菜单');
 insert into sys_menu values('110', '定时任务', '2', '2', '/monitor/job', '', 'C', '0', '1', 'monitor:job:view', 'fa fa-tasks', '0001', now(), '', null, '定时任务菜单');
+insert into sys_menu values('117', '备份恢复', '2', '3', '/monitor/backup', '', 'C', '0', '1', 'monitor:backup:view', 'fa fa-database', '0001', now(), '', null, '数据库备份恢复菜单');
 insert into sys_menu values('500', '操作日志', '108', '1', '/monitor/operlog', '', 'C', '0', '1', 'monitor:operlog:view', 'fa fa-address-book', '0001', now(), '', null, '操作日志菜单');
 insert into sys_menu values('501', '登录日志', '108', '2', '/monitor/logininfor', '', 'C', '0', '1', 'monitor:logininfor:view', 'fa fa-file-image-o', '0001', now(), '', null, '登录日志菜单');
 insert into sys_menu values('1000', '用户查询', '100', '1', '#', '', 'F', '0', '1', 'system:user:list', '#', '0001', now(), '', null, '');
@@ -300,6 +301,12 @@ insert into sys_menu values('1053', '任务删除', '110', '4', '#', '', 'F', '0
 insert into sys_menu values('1054', '状态修改', '110', '5', '#', '', 'F', '0', '1', 'monitor:job:changeStatus', '#', '0001', now(), '', null, '');
 insert into sys_menu values('1055', '任务详细', '110', '6', '#', '', 'F', '0', '1', 'monitor:job:detail', '#', '0001', now(), '', null, '');
 insert into sys_menu values('1056', '任务导出', '110', '7', '#', '', 'F', '0', '1', 'monitor:job:export', '#', '0001', now(), '', null, '');
+-- 备份恢复：权限按钮（view=F级由菜单本身承担，这里是增删改查/备份/恢复/下载/上传）
+insert into sys_menu values('1100', '备份查询',   '117', '1', '#', '', 'F', '0', '1', 'monitor:backup:list',     '#', '0001', now(), '', null, '');
+insert into sys_menu values('1101', '立即备份',   '117', '2', '#', '', 'F', '0', '1', 'monitor:backup:create',   '#', '0001', now(), '', null, '');
+insert into sys_menu values('1102', '删除备份',   '117', '3', '#', '', 'F', '0', '1', 'monitor:backup:remove',   '#', '0001', now(), '', null, '');
+insert into sys_menu values('1103', '下载备份',   '117', '4', '#', '', 'F', '0', '1', 'monitor:backup:download', '#', '0001', now(), '', null, '');
+insert into sys_menu values('1104', '恢复备份',   '117', '5', '#', '', 'F', '0', '1', 'monitor:backup:restore',  '#', '0001', now(), '', null, '');
 select setval(pg_get_serial_sequence('sys_menu', 'menu_id'), (select max(menu_id) from sys_menu));
 
 

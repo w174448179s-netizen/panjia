@@ -10,6 +10,16 @@ panjia:
   profile: /Users/shengwei/workspace
   # 获取ip地址开关
   addressEnabled: false
+  # 数据库备份/恢复
+  dbbackup:
+    # 备份文件存放目录，默认= ${panjia.profile}/dbbackup
+    backupDir:
+    # Postgres 所在 Docker 容器名（默认 panjia-postgres），留空则使用宿主机 pg_dump/psql
+    dockerContainer: panjia-postgres
+    # Docker 容器内临时中转目录
+    containerTmpDir: /tmp/panjia_db_backup
+    # 最大保留备份数，超过自动清理最旧
+    maxKeep: 30
 
 # 开发环境配置
 server:
@@ -61,10 +71,10 @@ spring:
   # 文件上传
   servlet:
     multipart:
-      # 单个文件大小
-      max-file-size: 10MB
+      # 单个文件大小（备份 zip 可能较大）
+      max-file-size: 2GB
       # 设置总上传的文件大小
-      max-request-size: 20MB
+      max-request-size: 2GB
 
 # MyBatis
 mybatis:
@@ -91,7 +101,7 @@ shiro:
     # 首页地址
     indexUrl: /index
     # 验证码开关
-    captchaEnabled: true
+    captchaEnabled: false
     # 验证码类型 math 数字计算 char 字符验证
     captchaType: math
   cookie:
