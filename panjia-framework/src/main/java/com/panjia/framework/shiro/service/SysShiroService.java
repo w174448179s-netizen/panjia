@@ -21,6 +21,11 @@ public class SysShiroService
     @Autowired
     private ISysUserOnlineService onlineService;
 
+    public ISysUserOnlineService onlineService()
+    {
+        return onlineService;
+    }
+
     @Autowired
     private OnlineSessionFactory onlineSessionFactory;
 

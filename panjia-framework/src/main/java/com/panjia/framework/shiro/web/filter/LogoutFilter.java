@@ -65,6 +65,23 @@ public class LogoutFilter extends org.apache.shiro.web.filter.authc.LogoutFilter
             {
                 log.error("logout fail.", ise);
             }
+            // 【钉钉 WebView 特判】不发 302，改用 forward 直接渲染 /dingtalk/sso。
+            // 实测钉钉 PC WKWebView 对「导航 GET → 302」跟随不稳定：302 已正常发出，
+            // 但 WebView 不发后续请求，直接报 NSURLErrorNetworkConnectionLost
+            // （登录路径已用「直渲染 dtok」绕开，此处同方处理）。
+            // forward 在同一请求内完成、无网络跳转；session 已 logout，sso 页自动重走免登。
+            if (isDingTalkRequest(request))
+            {
+                try
+                {
+                    request.getRequestDispatcher("/dingtalk/sso").forward(request, response);
+                    return false;
+                }
+                catch (Exception e)
+                {
+                    log.warn("[LogoutFilter] forward 到 /dingtalk/sso 失败，回退 302：{}", e.getMessage());
+                }
+            }
             issueRedirect(request, response, redirectUrl);
         }
         catch (Exception e)
@@ -74,12 +91,43 @@ public class LogoutFilter extends org.apache.shiro.web.filter.authc.LogoutFilter
         return false;
     }
 
+    /** User-Agent 是否来自钉钉（PC DTWKWebView / 移动端 AliApp(DingTalk)） */
+    private boolean isDingTalkRequest(ServletRequest request)
+    {
+        try
+        {
+            if (request instanceof jakarta.servlet.http.HttpServletRequest httpRequest)
+            {
+                String ua = httpRequest.getHeader("User-Agent");
+                return StringUtils.isNotEmpty(ua) && ua.contains("DingTalk");
+            }
+        }
+        catch (Exception ignore) { }
+        return false;
+    }
+
     /**
-     * 退出跳转URL
+     * 退出跳转URL。
+     * <p>
+     * 【钉钉 WebView 特判】User-Agent 含 DingTalk 时退出后跳 /dingtalk/sso 而非 /login
+     * （钉钉用户没有密码概念；/login 全套资源在 1Mbps 隧道下加载多秒）。
+     * 注意：钉钉请求实际走 preHandle 里的 forward 直渲染，本方法的结果只作为 forward 失败的回退。
      */
     @Override
     protected String getRedirectUrl(ServletRequest request, ServletResponse response, Subject subject)
     {
+        try
+        {
+            if (request instanceof jakarta.servlet.http.HttpServletRequest httpRequest)
+            {
+                String ua = httpRequest.getHeader("User-Agent");
+                if (StringUtils.isNotEmpty(ua) && ua.contains("DingTalk"))
+                {
+                    return "/dingtalk/sso";
+                }
+            }
+        }
+        catch (Exception ignore) { /* 判断失败则走默认 /login */ }
         String url = getLoginUrl();
         if (StringUtils.isNotEmpty(url))
         {

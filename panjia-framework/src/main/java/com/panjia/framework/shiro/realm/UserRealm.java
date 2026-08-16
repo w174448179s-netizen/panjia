@@ -12,6 +12,8 @@ import org.apache.shiro.authc.SimpleAuthenticationInfo;
 import org.apache.shiro.authc.UnknownAccountException;
 import org.apache.shiro.authc.UsernamePasswordToken;
 import org.apache.shiro.authz.AuthorizationInfo;
+
+import com.panjia.framework.shiro.token.DingTalkSsoToken;
 import org.apache.shiro.authz.SimpleAuthorizationInfo;
 import org.apache.shiro.cache.Cache;
 import org.apache.shiro.realm.AuthorizingRealm;
@@ -51,6 +53,20 @@ public class UserRealm extends AuthorizingRealm
     private SysLoginService loginService;
 
     /**
+     * 声明此 Realm 能处理的 Token 类型。
+     * <p>注意：Shiro 默认按 {@code setAuthenticationTokenClass()} 匹配（通常只认 UsernamePasswordToken），
+     * 若不加此 override，DingTalkSsoToken 会被 supports() 直接判 false 拒绝，
+     * 报出 "Realm ... does not support authentication token [DingTalkSsoToken]"，
+     * 即便 doGetAuthenticationInfo() 内部已经写了 instanceof 判断也进不去。
+     */
+    @Override
+    public boolean supports(AuthenticationToken token)
+    {
+        return token != null
+                && (token instanceof UsernamePasswordToken || token instanceof DingTalkSsoToken);
+    }
+
+    /**
      * 授权
      */
     @Override
@@ -86,6 +102,34 @@ public class UserRealm extends AuthorizingRealm
     @Override
     protected AuthenticationInfo doGetAuthenticationInfo(AuthenticationToken token) throws AuthenticationException
     {
+        SysUser user = null;
+
+        if (token instanceof DingTalkSsoToken)
+        {
+            // —— 钉钉 SSO 免密登录：身份已通过钉钉授权码校验，此处只做账号状态校验 ——
+            DingTalkSsoToken sso = (DingTalkSsoToken) token;
+            try
+            {
+                user = loginService.ssoLogin(sso.getLoginName(), "钉钉");
+            }
+            catch (UserNotExistsException e)
+            {
+                throw new UnknownAccountException(e.getMessage(), e);
+            }
+            catch (UserBlockedException | RoleBlockedException e)
+            {
+                throw new LockedAccountException(e.getMessage(), e);
+            }
+            catch (Exception e)
+            {
+                log.info("钉钉SSO对用户[{}]登录验证未通过：{}", sso.getLoginName(), e.getMessage());
+                throw new AuthenticationException(e.getMessage(), e);
+            }
+            SimpleAuthenticationInfo info = new SimpleAuthenticationInfo(user, sso.getCredentials(), getName());
+            return info;
+        }
+
+        // —— 原有账号密码登录 ——
         UsernamePasswordToken upToken = (UsernamePasswordToken) token;
         String username = upToken.getUsername();
         String password = "";
@@ -93,8 +137,6 @@ public class UserRealm extends AuthorizingRealm
         {
             password = new String(upToken.getPassword());
         }
-
-        SysUser user = null;
         try
         {
             user = loginService.login(username, password);

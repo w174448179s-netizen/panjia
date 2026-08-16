@@ -28,7 +28,21 @@ server:
   servlet:
     # 应用的访问路径
     context-path: /
+  # ===== gzip 压缩：花生壳仅 1Mbps，140KB JS/大页面必须压缩（文本类可减 70%+） =====
+  compression:
+    enabled: true
+    mime-types: text/html,text/css,application/javascript,text/javascript,application/json,image/svg+xml
+    # 1KB 起压：小响应压缩得不偿失，大响应（SDK/首页 JS/CSS）全兜住
+    min-response-size: 1KB
+  # 反向代理（花生壳/ngrok/Nginx）转发头处理：用 X-Forwarded-Proto/X-Forwarded-Host 还原原始 scheme+host
+  # 否则 Tomcat 用「代理→应用」这一跳的 http://localhost:8080 拼重定向 Location，导致 https 丢失
+  forward-headers-strategy: native
   tomcat:
+    # ===== 访问日志：排查钉钉 WebView 断连必备（记录每个到达的请求+耗时），排障后可关闭 =====
+    accesslog:
+      enabled: true
+      directory: logs/access
+      pattern: '%h %t "%r" %s %b %Dms cookie=[%{Cookie}i] %{User-Agent}i'
     # tomcat的URI编码
     uri-encoding: UTF-8
     # 连接数满后的排队数，默认为100
@@ -114,7 +128,8 @@ shiro:
     # 设置Cookie的过期时间，天为单位
     maxAge: 30
     # 设置密钥，务必保持唯一性（生成方式，直接拷贝到main运行即可）Base64.encodeToString(CipherUtils.generateNewKey(128, "AES").getEncoded()) （默认启动生成随机秘钥，随机秘钥会导致之前客户端RememberMe Cookie无效，如设置固定秘钥RememberMe Cookie则有效）
-    cipherKey:
+    # 【重要】盘家已配置固定值：重启后「记住我」不会失效；不要在生产环境随意更换此值，更换会让所有用户的 rememberMe cookie 一次性失效
+    cipherKey: 3AvVhmFLUs0KTA3Kprsdag==
   session:
     # Session超时时间，-1代表永不过期（默认30分钟）
     expireTime: 30

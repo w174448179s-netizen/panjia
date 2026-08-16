@@ -3,8 +3,12 @@ package com.panjia.framework.config;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.commons.io.IOUtils;
 import org.apache.shiro.cache.ehcache.EhCacheManager;
 import org.apache.shiro.config.ConfigurationException;
@@ -49,6 +53,8 @@ import jakarta.servlet.Filter;
 @Configuration
 public class ShiroConfig
 {
+    private static final Logger log = LoggerFactory.getLogger(ShiroConfig.class);
+
     /**
      * Session超时时间，单位为毫秒（默认30分钟）
      */
@@ -248,6 +254,42 @@ public class ShiroConfig
         manager.setSessionDAO(sessionDAO());
         // 自定义sessionFactory
         manager.setSessionFactory(sessionFactory());
+        // ===== 关键修复：显式配置 sessionIdCookie（JSESSIONID），适配钉钉 WKWebView + 反向代理场景 =====
+        // Shiro DefaultWebSessionManager 会懒加载一个默认 SimpleCookie，但默认 SameSite 未设置，
+        // 在钉钉内嵌 WKWebView（Safari 内核）中 Cookie 可能被静默丢弃，导致登录成功后 302→/index
+        // 仍然携带旧 JSESSIONID，触发 UnknownSessionException，页面白屏无响应。
+        // 这里主动创建一个带 SameSite=Lax、httpOnly=true、path=/ 的 cookie 模板交给 SessionManager。
+        // ------------------------------------------------------------------------------------------
+        // 【HTTPS 强制】Secure=true 直接硬编码，不再依赖 request.isSecure() 的动态判断。
+        //   原因：花生壳/Ngrok 等内网穿透工具通常只做 HTTPS 隧道，不转发 X-Forwarded-Proto 头，
+        //         Tomcat 实际收到的还是 HTTP（request.isSecure()=false），SimpleCookie.saveTo
+        //         就会写 Set-Cookie 时不带 Secure。Safari/WKWebView 在 HTTPS 页面看到不带 Secure
+        //         的 Cookie 会直接拒收，登录成功后 sessionId 还是写不进去，白屏。
+        //   钉钉开放平台硬性要求「应用首页地址」必须是 HTTPS，所以所有从钉钉工作台进来的请求
+        //   一定是 HTTPS，硬编码 Secure=true 是安全的；本地开发环境若用 HTTP 访问，浏览器只是
+        //   "忽略 Cookie 的 Secure 限制"（HTTP 场景会照常发送），不影响本地联调。
+        // ------------------------------------------------------------------------------------------
+        SimpleCookie sessionIdCookie = new SimpleCookie("JSESSIONID");
+        sessionIdCookie.setHttpOnly(httpOnly);
+        sessionIdCookie.setPath(path);
+        sessionIdCookie.setSecure(true); // 钉钉H5强制 HTTPS → Cookie 必须带 Secure，Safari 严格校验
+        // domain 默认空（使用当前访问域名）。显式填错反而会让浏览器拒绝写入 Cookie，
+        // 因此这里只在配置非空时才设置，保持与 rememberMeCookie 一致的策略。
+        if (StringUtils.isNotEmpty(domain))
+        {
+            sessionIdCookie.setDomain(domain);
+        }
+        // -1 表示「会话级 Cookie」（浏览器关闭即失效），与 RuoYi 原有行为一致；不要填 0（立即删除）
+        sessionIdCookie.setMaxAge(-1);
+        // SameSite=Lax：允许顶级导航（302 跳转）携带 Cookie，同时防普通 CSRF。
+        // Shiro 2.2.0 的 SimpleCookie 原生支持 setSameSite（Cookie.SameSiteOptions），
+        // 由 SessionManager 统一写出 Set-Cookie，保证【单一来源】——
+        // 之前 DingTalkLoginController 手动 addHeader 写的第二份 JSESSIONID（后写覆盖）
+        // 会导致浏览器丢弃正确 SameSite 属性的那份，引发登录后 1~2 分钟 UnknownSessionException。
+        sessionIdCookie.setSameSite(org.apache.shiro.web.servlet.Cookie.SameSiteOptions.LAX);
+        manager.setSessionIdCookie(sessionIdCookie);
+        log.info("[Shiro] 已显式配置 sessionIdCookie(JSESSIONID): httpOnly={}, path={}, secure=TRUE(钉钉HTTPS强制), domain={}, maxAge=-1(Session级), SameSite=Lax(单一来源写入)",
+                httpOnly, path, StringUtils.isEmpty(domain) ? "(当前访问域名)" : domain);
         return manager;
     }
 
@@ -317,8 +359,14 @@ public class ShiroConfig
         filterChainDefinitionMap.put("/js/**", "anon");
         filterChainDefinitionMap.put("/panjia/**", "anon");
         filterChainDefinitionMap.put("/captcha/captchaImage**", "anon");
-        // 匿名访问不鉴权注解列表
-        permitAllUrl.getUrls().forEach(url -> filterChainDefinitionMap.put(url, "anon"));
+        // 匿名访问不鉴权注解列表（PermitAllUrlProperties 扫描 @Anonymous 得到）
+        List<String> scannedAnonUrls = permitAllUrl.getUrls() == null ? new ArrayList<>() : new ArrayList<>(permitAllUrl.getUrls());
+        scannedAnonUrls.forEach(url -> filterChainDefinitionMap.put(url, "anon"));
+        // 【兜底】钉钉免登相关入口：即使 @Anonymous 扫描异常，也要保证这几个URL能匿名通过
+        for (String u : new String[] { "/dingtalk/login", "/dingtalk/sso", "/dingtalk/logout", "/dingtalk/config", "/dingtalk/log" })
+        {
+            filterChainDefinitionMap.putIfAbsent(u, "anon");
+        }
         // 退出 logout地址，shiro去清除session
         filterChainDefinitionMap.put("/logout", "logout");
         // 不需要拦截的访问
@@ -339,6 +387,25 @@ public class ShiroConfig
         // 所有请求需要认证
         filterChainDefinitionMap.put("/**", "user,kickout,onlineSession,syncOnlineSession,csrfValidateFilter");
         shiroFilterFactoryBean.setFilterChainDefinitionMap(filterChainDefinitionMap);
+
+        // 匿名链诊断日志：启动时把所有 anon URL 打出来，便于核对 @Anonymous 是否生效
+        List<String> anonList = new ArrayList<>();
+        filterChainDefinitionMap.forEach((k, v) -> { if (v.startsWith("anon")) anonList.add(k); });
+        log.info("[Shiro] anon 链共 {} 条：{}", anonList.size(),
+                anonList.size() <= 60 ? anonList : anonList.subList(0, 60) + "...(共" + anonList.size() + "条)");
+        if (!scannedAnonUrls.isEmpty())
+        {
+            log.info("[Shiro] @Anonymous 扫描到的URL子集：{}", scannedAnonUrls);
+        }
+        // 关键校验：钉钉免登入口必须在 anon 链里，否则会被 /** → user 拦截，直接 302 回 /login 丢掉 code 参数
+        String[] mustAnon = { "/dingtalk/login", "/dingtalk/sso", "/dingtalk/config", "/dingtalk/logout", "/dingtalk/log" };
+        for (String u : mustAnon)
+        {
+            if (!filterChainDefinitionMap.containsKey(u) || !filterChainDefinitionMap.get(u).startsWith("anon"))
+            {
+                log.error("[Shiro] 关键匿名URL {} 未进入anon链！钉钉免登会被拦截。请检查 @Anonymous 注解与 PermitAllUrlProperties 扫描。", u);
+            }
+        }
 
         return shiroFilterFactoryBean;
     }

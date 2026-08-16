@@ -65,6 +65,11 @@ public class SysIndexController extends BaseController
         mmap.put("isDefaultModifyPwd", initPasswordIsModify(user.getPwdUpdateDate()));
         mmap.put("isPasswordExpired", passwordIsExpiration(user.getPwdUpdateDate()));
         mmap.put("isMobile", ServletUtils.checkAgentIsMobile(ServletUtils.getRequest().getHeader("User-Agent")));
+        // 钉钉内嵌标识：UA 含 DingTalk（PC DTWKWebView / 移动 AliApp(DingTalk)）时为 true。
+        // 首页据此隐藏「退出登录」入口：钉钉场景身份认证在客户端侧，网页退出 session 后
+        // 免登入口仍在，点了退出只是"闪一下又自动登录回来"，动作无意义还容易让用户困惑。
+        String ua = ServletUtils.getRequest().getHeader("User-Agent");
+        mmap.put("isDingTalk", StringUtils.isNotEmpty(ua) && ua.contains("DingTalk"));
 
         // 菜单导航显示风格
         String menuStyle = configService.selectConfigByKey("sys.index.menuStyle");

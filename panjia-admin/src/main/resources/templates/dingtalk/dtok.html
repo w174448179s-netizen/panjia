@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
+<title>登录成功 · 盘家</title>
+<!-- 后端注入跳转目标（防开放重定向，已在 Controller 层校验为站内路径） -->
+<meta name="go" th:content="${go}"/>
+<style th:inline="none">
+html,body{margin:0;padding:0;background:#0b0f19;color:#f3f4f6;min-height:100vh;
+  font-family:-apple-system,PingFang SC,Microsoft YaHei,sans-serif;}
+.wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;}
+.card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:14px;
+  padding:28px 24px;max-width:360px;width:100%;text-align:center;}
+.logo{width:52px;height:52px;border-radius:14px;background:#ff5a00;margin:0 auto 18px;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 8px 24px rgba(255,90,0,.35);}
+.logo svg{width:32px;height:32px;}
+.brand{font-size:17px;font-weight:700;letter-spacing:1px;margin-bottom:4px;}
+.sub{font-size:13px;color:#9ca3af;margin-bottom:20px;}
+.spin{width:36px;height:36px;border-radius:50%;border:3px solid rgba(255,255,255,.15);
+  border-top-color:#ff5a00;-webkit-animation:spin .9s linear infinite;animation:spin .9s linear infinite;margin:0 auto 16px;}
+@-webkit-keyframes spin{to{-webkit-transform:rotate(360deg);}}
+@keyframes spin{to{transform:rotate(360deg);}}
+.tip{font-size:13px;color:#d1d5db;line-height:1.8;}
+.btn{display:inline-block;margin-top:18px;padding:9px 18px;background:linear-gradient(135deg,#ff5a00,#ff8a3d);
+  color:#fff;text-decoration:none;border-radius:9px;font-size:13px;font-weight:600;letter-spacing:1px;}
+.count{color:#ff5a00;font-weight:700;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+    <div class="logo">
+      <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+        <path d="M52 112 L100 70 L148 112" fill="none" stroke="#fff" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/>
+        <line x1="100" y1="112" x2="100" y2="150" stroke="#fff" stroke-width="18" stroke-linecap="round"/>
+        <line x1="68" y1="112" x2="68" y2="150" stroke="#fff" stroke-width="12" stroke-linecap="round"/>
+        <line x1="132" y1="112" x2="132" y2="150" stroke="#fff" stroke-width="12" stroke-linecap="round"/>
+      </svg>
+    </div>
+    <div class="brand">盘家 · 门店经营系统</div>
+    <div class="sub">登录成功</div>
+    <div class="spin" id="spin"></div>
+    <div class="tip" id="tip">正在进入系统，<span class="count" id="count">1</span> 秒后自动跳转…<br/>
+      如果长时间未进入，请 <a class="btn" id="btnGo" href="/index">手动进入</a>
+    </div>
+  </div>
+</div>
+<script th:inline="none">
+// 关键：页面 onload（意味着本页加载完成 → WKWebView 超时监控已解除）后，再跳目标页
+// 这样目标页（/index 等）即使要加载 10 秒也不会触发 NSURLErrorNetworkConnectionLost
+(function(){
+  // 从 meta 标签取跳转目标（Controller 层已校验为合法站内路径，兜底 /index）
+  var GO = '/index';
+  try{
+    var m=document.querySelector('meta[name=go]');
+    if(m && m.content && m.content.charAt(0)==='/' && m.content.indexOf('//')!==0){GO=m.content;}
+  }catch(e){}
+  // 同步更新「手动进入」按钮
+  try{document.getElementById('btnGo').href=GO;}catch(e){}
+  var jumped=false;
+  var n=1;var el=document.getElementById('count');
+  function jump(){ if(jumped)return; jumped=true; try{location.href=GO;}catch(e){location.replace(GO);} }
+  function tick(){if(n<=0){jump();return;}if(el)el.textContent=n;n--;setTimeout(tick,1000);}
+  if (document.readyState==='complete'){tick();}
+  else{window.addEventListener('load',function(){setTimeout(tick,50);});}
+  // 兜底：8 秒后仍未跳转才强制（延长到 8s，避免在 load 未完成、WKWebView
+  // 导航监控仍激活时提前发起 /index 导航，重新触发超时中断）
+  setTimeout(jump,8000);
+})();
+</script>
+</body>
+</html>

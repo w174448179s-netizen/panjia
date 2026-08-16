@@ -41,7 +41,8 @@
 				<div class="pull-left info">
 				  <p>[[${user.loginName}]]</p>
 				  <a href="javascript:;"><i class="fa fa-circle text-success"></i> 在线</a>
-				  <a th:href="@{logout}" style="padding-left:5px;"><i class="fa fa-sign-out text-danger"></i> 注销</a>
+				  <!-- 钉钉内嵌时隐藏注销：免登会立刻重建会话，退出无意义 -->
+								<a th:href="@{logout}" th:unless="${isDingTalk}" style="padding-left:5px;"><i class="fa fa-sign-out text-danger"></i> 注销</a>
 				</div>
 			</div>
 			
@@ -129,7 +130,8 @@
 				</div>
                 <!-- 右侧栏 -->
                 <ul class="nav navbar-top-links navbar-right welcome-message">
-                    <li><a data-toggle="tooltip" data-trigger="hover" data-placement="bottom" title="锁定屏幕" href="javascript:;" id="lockScreen"><i class="fa fa-lock"></i> 锁屏</a></li>
+                    <!-- 钉钉内嵌时隐藏锁屏：解锁需密码，免登用户无密码 -->
+                    <li th:unless="${isDingTalk}"><a data-toggle="tooltip" data-trigger="hover" data-placement="bottom" title="锁定屏幕" href="javascript:;" id="lockScreen"><i class="fa fa-lock"></i> 锁屏</a></li>
 	                <li><a data-toggle="tooltip" data-trigger="hover" data-placement="bottom" title="全屏显示" href="javascript:;" id="fullScreen"><i class="fa fa-arrows-alt"></i> 全屏</a></li>
                     <li class="dropdown" id="noticeDropdown">
                         <a href="javascript:void(0)" class="dropdown-toggle" style="position:relative;" data-hover="dropdown">
@@ -155,7 +157,8 @@
 								<i class="fa fa-user"></i> 个人中心</a>
 							</li>
 							<li>
-								<a onclick="resetPwd()">
+								<!-- 钉钉内嵌时隐藏：免登用户无密码概念 -->
+								<a th:unless="${isDingTalk}" onclick="resetPwd()">
 								<i class="fa fa-key"></i> 修改密码</a>
 							</li>
 							<li>
@@ -168,8 +171,9 @@
 							</li>
 							<li class="divider"></li>
 							<li>
-								<a th:href="@{logout}">
+								<a th:href="@{logout}" th:unless="${isDingTalk}">
 								<i class="fa fa-sign-out"></i> 退出登录</a>
+								<!-- 钉钉内嵌提示：身份随钉钉客户端，无需退出 -->
 							</li>
 						</ul>
 					</li>
@@ -321,8 +325,8 @@ $(function() {
 	    }
 	}
 	
-	/* 初始密码提示 */
-	if([[${isDefaultModifyPwd}]]) {
+	/* 初始密码提示（钉钉内嵌免登用户无密码，不提示） */
+	if([[${isDefaultModifyPwd}]] && ![[${isDingTalk}]]) {
 		layer.confirm("您的密码还是初始密码，请修改密码！", {
 			icon: 0,
 			title: "安全提示",
@@ -334,8 +338,8 @@ $(function() {
 		});
 	}
 	
-	/* 过期密码提示 */
-	if(![[${isDefaultModifyPwd}]] && [[${isPasswordExpired}]]) {
+	/* 过期密码提示（钉钉内嵌免登用户无密码，不提示） */
+	if(![[${isDefaultModifyPwd}]] && [[${isPasswordExpired}]] && ![[${isDingTalk}]]) {
 		layer.confirm("您的密码已过期，请尽快修改密码！", {
 			icon: 0,
 			title: "安全提示",

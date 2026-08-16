@@ -49,6 +49,49 @@ public class SysLoginService
     private ISysConfigService configService;
 
     /**
+     * 钉钉 SSO 免密登录（已通过钉钉免登授权码校验身份）。
+     * <p>跳过：验证码校验、密码校验、用户名/密码长度校验；保留：用户存在/删除/禁用/IP黑名单 四项校验。
+     * @param loginName 系统用户 loginName
+     */
+    public SysUser ssoLogin(String loginName, String ssoType)
+    {
+        if (StringUtils.isEmpty(loginName))
+        {
+            AsyncManager.me().execute(AsyncFactory.recordLogininfor(loginName, Constants.LOGIN_FAIL, MessageUtils.message("not.null")));
+            throw new UserNotExistsException();
+        }
+        // IP黑名单校验
+        String blackStr = configService.selectConfigByKey("sys.login.blackIPList");
+        if (IpUtils.isMatchedIp(blackStr, ShiroUtils.getIp()))
+        {
+            AsyncManager.me().execute(AsyncFactory.recordLogininfor(loginName, Constants.LOGIN_FAIL, MessageUtils.message("login.blocked")));
+            throw new BlackListException();
+        }
+        // 查询用户信息
+        SysUser user = userService.selectUserByLoginName(loginName);
+        if (user == null)
+        {
+            AsyncManager.me().execute(AsyncFactory.recordLogininfor(loginName, Constants.LOGIN_FAIL, MessageUtils.message("user.not.exists")));
+            throw new UserNotExistsException();
+        }
+        if (UserStatus.DELETED.getCode().equals(user.getDelFlag()))
+        {
+            AsyncManager.me().execute(AsyncFactory.recordLogininfor(loginName, Constants.LOGIN_FAIL, MessageUtils.message("user.password.delete")));
+            throw new UserDeleteException();
+        }
+        if (UserStatus.DISABLE.getCode().equals(user.getStatus()))
+        {
+            AsyncManager.me().execute(AsyncFactory.recordLogininfor(loginName, Constants.LOGIN_FAIL, MessageUtils.message("user.blocked")));
+            throw new UserBlockedException();
+        }
+        String msg = (StringUtils.isBlank(ssoType) ? "SSO" : ssoType) + "免登成功";
+        AsyncManager.me().execute(AsyncFactory.recordLogininfor(loginName, Constants.LOGIN_SUCCESS, msg));
+        setRolePermission(user);
+        recordLoginInfo(user.getUserId());
+        return user;
+    }
+
+    /**
      * 登录
      */
     public SysUser login(String username, String password)

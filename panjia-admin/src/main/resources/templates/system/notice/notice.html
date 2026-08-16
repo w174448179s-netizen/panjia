@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org" xmlns:shiro="http://www.pollix.at/thymeleaf/shiro">
+<head>
+	<th:block th:include="include :: header('通知配置')" />
+	<style>
+		.card { border:1px solid #e7eaec; background:#fff; padding:20px; border-radius:4px; }
+		.card-title { font-size:16px; font-weight:600; margin:0 0 16px; padding-bottom:10px; border-bottom:1px solid #eee; }
+		.card-title .tip { color:#888; font-weight:400; font-size:12px; margin-left:8px; }
+		.form-horizontal .form-group { margin-bottom:14px; }
+		.form-horizontal .control-label { padding-top:7px; text-align:right; }
+		.switch-toggle { position:relative; display:inline-block; width:48px; height:24px; vertical-align:middle; }
+		.switch-toggle input { opacity:0; width:0; height:0; }
+		.switch-toggle .slider { position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background:#ccc; border-radius:24px; transition:.3s; }
+		.switch-toggle .slider:before { position:absolute; content:""; height:18px; width:18px; left:3px; bottom:3px; background:#fff; border-radius:50%; transition:.3s; }
+		.switch-toggle input:checked + .slider { background:#1ab394; }
+		.switch-toggle input:checked + .slider:before { transform: translateX(24px); }
+		.tip-box { background:#f5f7fa; border-left:4px solid #1ab394; padding:10px 14px; margin-bottom:16px; color:#555; font-size:13px; border-radius:0 3px 3px 0; }
+		.tip-box b { color:#1ab394; }
+	</style>
+</head>
+<body class="gray-bg">
+	<div class="container-div">
+		<div class="row">
+			<div class="col-sm-7">
+				<div class="card">
+					<h5 class="card-title">
+						<i class="fa fa-cog"></i>&nbsp;钉钉应用参数配置
+						<span class="tip">参数存储于系统【参数配置（sys_config）】表</span>
+					</h5>
+					<div class="tip-box">
+						<b>说明：</b>请将钉钉开放平台「企业内部应用」的 App ID / AgentId / Client ID / Client Secret / 企业 CorpId 填入下方；
+						开启后系统即可通过「工作通知」向指定手机号对应的钉钉用户发送消息，同时提供钉钉工作台点击应用免登。
+						Client Secret 首次保存后以星号展示，若需修改请直接输入新的密钥。
+						<br/><b style="color:#ff5a00;">提示：</b>「企业 CorpId」是钉钉 H5 免登 JSAPI requestAuthCode 必需参数，未填写会导致免登失败报错「corpId 不合法」。
+						获取路径：钉钉开放平台 → 企业信息 / 基本信息 → 企业ID。
+					</div>
+					<form id="notice-form" class="form-horizontal">
+						<div class="form-group">
+							<label class="col-sm-3 control-label">启用钉钉通知：</label>
+							<div class="col-sm-8">
+								<label class="switch-toggle">
+									<input type="checkbox" id="enabled" value="true"/>
+									<span class="slider"></span>
+								</label>
+								<span class="m-l-xs" id="enabled-label" style="color:#888;">未启用</span>
+							</div>
+						</div>
+						<div class="form-group">
+							<label class="col-sm-3 control-label">App ID：</label>
+							<div class="col-sm-8">
+								<input type="text" class="form-control" id="appId" name="appId" th:placeholder="'如 82d41356-0ddb-4c63-b4c4-89c98ca49a47'"/>
+							</div>
+						</div>
+						<div class="form-group">
+							<label class="col-sm-3 control-label">AgentId：</label>
+							<div class="col-sm-8">
+								<input type="text" class="form-control" id="agentId" name="agentId" th:placeholder="'纯数字，如 4868752593'"/>
+							</div>
+						</div>
+						<div class="form-group">
+							<label class="col-sm-3 control-label">Client ID：</label>
+							<div class="col-sm-8">
+								<input type="text" class="form-control" id="clientId" name="clientId" th:placeholder="'原 AppKey，如 dingaxohfuw7m7qnmplb'"/>
+							</div>
+						</div>
+						<div class="form-group">
+							<label class="col-sm-3 control-label">Client Secret：</label>
+							<div class="col-sm-8">
+								<input type="password" class="form-control" id="clientSecret" name="clientSecret" autocomplete="new-password" th:placeholder="'原 AppSecret；星号值表示未修改'"/>
+								<span class="help-block m-b-none text-muted">已保存过则显示星号，不修改请留空或原样保留星号</span>
+							</div>
+						</div>
+						<div class="form-group">
+							<label class="col-sm-3 control-label"><span style="color:#ff5a00;">*</span> 企业 CorpId：</label>
+							<div class="col-sm-8">
+								<input type="text" class="form-control" id="corpId" name="corpId" th:placeholder="'如 ding1234567890abcdef；钉钉企业信息 → 企业ID'"/>
+								<span class="help-block m-b-none text-muted">钉钉免登 JSAPI 必传参数。空值会导致工作台点击应用报错「corpId 不合法」。</span>
+							</div>
+						</div>
+						<div class="form-group">
+							<div class="col-sm-offset-3 col-sm-8">
+								<button type="button" class="btn btn-primary" id="btn-save" shiro:hasPermission="system:notice:edit">
+									<i class="fa fa-check"></i>&nbsp;保存配置
+								</button>
+								<button type="button" class="btn btn-default" id="btn-reload">
+									<i class="fa fa-refresh"></i>&nbsp;重新加载
+								</button>
+							</div>
+						</div>
+					</form>
+				</div>
+			</div>
+
+			<div class="col-sm-5">
+				<div class="card">
+					<h5 class="card-title">
+						<i class="fa fa-sitemap"></i>&nbsp;组织架构/用户同步
+						<span class="tip">钉钉 → 盘家 sys_dept / sys_user / sys_user_role 单向同步</span>
+					</h5>
+					<div class="tip-box">
+						<b>同步策略：</b>
+						部门按钉钉ID匹配（不存在则新建，同名+同父部门自动合并）；
+						用户按「钉钉用户ID → 手机号 → 邮箱」3 级匹配；
+						<strong>新用户</strong>默认授予「普通员工」角色，主管授予「部门主管」角色，初始密码显示在下方（同时写入用户备注）。
+						<strong>已离职</strong>用户：钉钉 active=false → 自动将本地账号停用（status=1）。
+					</div>
+					<form class="form-horizontal">
+						<div class="form-group">
+							<div class="col-sm-12 text-center">
+								<button type="button" class="btn btn-primary btn-lg" id="btn-sync" shiro:hasPermission="system:notice:sync">
+									<i class="fa fa-refresh"></i>&nbsp;立即同步组织与人员
+								</button>
+								<span class="m-l-xs" style="color:#888;font-size:12px;">预计几千人以内几十秒完成</span>
+							</div>
+						</div>
+					</form>
+					<div id="sync-result" style="display:none;margin-top:4px;">
+						<h6 style="margin:0 0 8px;color:#1ab394;font-weight:600;">📊 同步结果</h6>
+						<table class="table table-bordered table-striped" style="margin-bottom:0;">
+							<thead>
+								<tr><th>维度</th><th>新增</th><th>更新</th><th>停用</th></tr>
+							</thead>
+							<tbody>
+								<tr><td>部门</td>
+									<td id="sr-di">-</td><td id="sr-du">-</td><td id="sr-dd">-</td></tr>
+								<tr><td>用户</td>
+									<td id="sr-ui">-</td><td id="sr-uu">-</td><td id="sr-ud">-</td></tr>
+								<tr><td>耗时/ms</td>
+									<td id="sr-cost" colspan="3" style="text-align:center;">-</td></tr>
+							</tbody>
+						</table>
+						<div id="sr-newusers" style="margin-top:8px;"></div>
+					</div>
+				</div>
+
+				<div class="card" style="margin-top:16px;">
+					<h5 class="card-title">
+						<i class="fa fa-send"></i>&nbsp;测试发送
+						<span class="tip">发送文本工作通知到指定手机号</span>
+					</h5>
+					<form id="test-form" class="form-horizontal">
+						<div class="form-group">
+							<label class="col-sm-3 control-label">接收手机号：</label>
+							<div class="col-sm-9">
+								<input type="text" class="form-control" id="mobile" name="mobile" th:placeholder="'钉钉用户已绑定的手机号'"/>
+							</div>
+						</div>
+						<div class="form-group">
+							<label class="col-sm-3 control-label">消息内容：</label>
+							<div class="col-sm-9">
+								<textarea class="form-control" id="content" name="content" rows="6" th:placeholder="'支持中文、换行等文本内容。'">【盘家测试】您好，钉钉通知配置已生效，时间：--</textarea>
+							</div>
+						</div>
+						<div class="form-group">
+							<div class="col-sm-offset-3 col-sm-9">
+								<button type="button" class="btn btn-success" id="btn-send" shiro:hasPermission="system:notice:test">
+									<i class="fa fa-paper-plane"></i>&nbsp;发送测试
+								</button>
+								<button type="button" class="btn btn-outline btn-default" id="btn-fill-time">
+									<i class="fa fa-clock-o"></i>&nbsp;填入当前时间
+								</button>
+							</div>
+						</div>
+					</form>
+				</div>
+
+				<div class="card" style="margin-top:16px;">
+					<h5 class="card-title"><i class="fa fa-info-circle"></i>&nbsp;后续接入指引 <span class="tip">业务层注入 DingTalkNoticeService 即可</span></h5>
+<pre th:inline="none" style="background:#f6f8fa;border-radius:3px;padding:12px;font-size:12px;color:#333;white-space:pre-wrap;">
+@Autowired
+private DingTalkNoticeService dingTalk;
+
+public void onOrderCreated(String mobile, String text) {
+    DingTalkSendResult r = dingTalk.sendTextByMobile(mobile, text);
+    // r.isSuccess(); r.getTaskId();
+}
+
+// 更多：sendTextByMobiles / sendMarkdownByMobile / sendCorpMsg
+</pre>
+				</div>
+			</div>
+		</div>
+	</div>
+	<th:block th:include="include :: footer"/>
+	<script th:inline="javascript">
+	var prefix = ctx + "system/notice";
+	var MASKED = "******";
+
+	function loadCfg() {
+		$.modal.loading("加载中...");
+		$.post(prefix + "/getConfig", function(res) {
+			$.modal.closeLoading();
+			if (res.code != 0) { $.modal.msgError(res.msg || "加载配置失败"); return; }
+			var c = res.data || {};
+			$("#enabled").prop("checked", c.enabled === "true" || c.enabled === true);
+			$("#appId").val(c.appId || "");
+			$("#agentId").val(c.agentId || "");
+			$("#clientId").val(c.clientId || "");
+			$("#clientSecret").val(c.clientSecret || "");
+			$("#corpId").val(c.corpId || "");
+			refreshEnabledLabel();
+		}).fail(function() { $.modal.closeLoading(); $.modal.msgError("网络错误"); });
+	}
+
+	function refreshEnabledLabel() {
+		var on = $("#enabled").prop("checked");
+		$("#enabled-label").text(on ? "已启用" : "未启用").css("color", on ? "#1ab394" : "#888");
+	}
+
+	function saveCfg() {
+		var enabled = $("#enabled").prop("checked") ? "true" : "false";
+		var data = {
+			enabled:      enabled,
+			appId:        $.trim($("#appId").val()),
+			agentId:      $.trim($("#agentId").val()),
+			clientId:     $.trim($("#clientId").val()),
+			clientSecret: $("#clientSecret").val(),
+			corpId:       $.trim($("#corpId").val())
+		};
+		if (data.enabled === "true") {
+			if (!data.appId)    { $.modal.msgWarning("请填写 App ID"); return; }
+			if (!data.agentId)  { $.modal.msgWarning("请填写 AgentId"); return; }
+			if (!/^\d+$/.test(data.agentId)) { $.modal.msgWarning("AgentId 必须是纯数字"); return; }
+			if (!data.clientId) { $.modal.msgWarning("请填写 Client ID"); return; }
+			if (!data.clientSecret) { $.modal.msgWarning("请填写 Client Secret"); return; }
+			if (!data.corpId)   { $.modal.msgWarning("请填写企业 CorpId（钉钉免登 JSAPI 必需参数）"); return; }
+		}
+		$.modal.loading("保存中...");
+		$.post(prefix + "/saveConfig", data, function(res) {
+			$.modal.closeLoading();
+			if (res.code == 0) { $.modal.msgSuccess(res.msg || "保存成功"); loadCfg(); }
+			else { $.modal.msgError(res.msg || "保存失败"); }
+		}).fail(function() { $.modal.closeLoading(); $.modal.msgError("网络错误"); });
+	}
+
+	function testSend() {
+		var mobile  = $.trim($("#mobile").val());
+		var content = $.trim($("#content").val());
+		if (!mobile)  { $.modal.msgWarning("请输入接收者手机号"); return; }
+		if (!content) { $.modal.msgWarning("请输入消息内容"); return; }
+		$.modal.loading("发送中...");
+		$.post(prefix + "/testSend", { mobile: mobile, content: content }, function(res) {
+			$.modal.closeLoading();
+			if (res.code == 0) $.modal.msgSuccess(res.msg || "发送成功");
+			else               $.modal.msgError(res.msg || "发送失败");
+		}).fail(function() { $.modal.closeLoading(); $.modal.msgError("网络错误"); });
+	}
+
+	function syncNow() {
+		if (!confirm("即将从钉钉拉取全量部门/用户并写入盘家后台，需几秒至几十秒。是否继续？")) return;
+		$.modal.loading("同步中，请勿刷新...");
+		$("#sync-result").hide();
+		$.post(prefix + "/sync", function(res) {
+			$.modal.closeLoading();
+			if (res.code != 0) { $.modal.msgError(res.msg || "同步失败"); return; }
+			$.modal.msgSuccess(res.msg || "同步完成");
+			var d = res.data || {};
+			$("#sr-di").text(d.deptInserted || 0);
+			$("#sr-du").text(d.deptUpdated  || 0);
+			$("#sr-dd").text(d.deptDisabled || 0);
+			$("#sr-ui").text(d.userInserted || 0);
+			$("#sr-uu").text(d.userUpdated  || 0);
+			$("#sr-ud").text(d.userDisabled || 0);
+			$("#sr-cost").text(d.costMs || 0);
+			// 新用户密码
+			var box = $("#sr-newusers").empty();
+			var users = d.newUsers || [];
+			if (!users.length) {
+				box.html('<div class="text-muted" style="font-size:12px;">本次没有新建用户。</div>');
+			} else {
+				var shown = Math.min(5, users.length);
+				var html = '<div class="alert alert-warning" style="padding:10px 12px;margin-bottom:0;"><b>本次新建用户 ' + d.newUserCount + ' 位，初始密码（前 ' + shown + ' 位明文展示，其余请在用户管理中重置）：</b><ul style="margin:6px 0 0 22px;padding:0;">';
+				for (var i = 0; i < users.length; i++) {
+					var u = users[i];
+					if (i < shown) html += '<li>' + u.loginName + ' / <code style="background:#fff;padding:0 4px;">' + (u.password || "（详见用户管理→备注或重置）") + '</code></li>';
+					else            html += '<li class="text-muted">' + u.loginName + '（密码已写入用户备注/或重置）</li>';
+				}
+				html += '</ul></div>';
+				box.html(html);
+			}
+			$("#sync-result").slideDown(200);
+		}).fail(function() { $.modal.closeLoading(); $.modal.msgError("网络错误"); });
+	}
+
+	$(function() {
+		$("#enabled").on("change", refreshEnabledLabel);
+		$("#btn-save").on("click", saveCfg);
+		$("#btn-reload").on("click", loadCfg);
+		$("#btn-send").on("click", testSend);
+		$("#btn-sync").on("click", syncNow);
+		$("#btn-fill-time").on("click", function() {
+			var now = new Date();
+			var pad = function(n){return n<10?"0"+n:""+n;};
+			var s = now.getFullYear()+"-"+pad(now.getMonth()+1)+"-"+pad(now.getDate())+" "+pad(now.getHours())+":"+pad(now.getMinutes())+":"+pad(now.getSeconds());
+			$("#content").val("【盘家测试】您好，钉钉通知配置已生效，时间：" + s);
+		});
+		loadCfg();
+	});
+	</script>
+</body>
+</html>

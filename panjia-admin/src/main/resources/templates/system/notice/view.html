@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org" xmlns:shiro="http://www.pollix.at/thymeleaf/shiro">
+<head>
+	<meta charset="UTF-8"/>
+	<title>公告详情</title>
+	<th:block th:include="include :: header('公告详情')"/>
+	<style>
+		body { background:#fff; margin:0; }
+		.wrap { padding: 32px 36px 60px; }
+		.type-tag { display:inline-block; padding:2px 10px; border-radius:3px; font-size:12px; font-weight:600;
+		            margin-right:10px; vertical-align:middle; }
+		.type-tag.notice  { background:#fff5e5; color:#f0ad4e; }
+		.type-tag.public  { background:#e8f7ef; color:#1ab394; }
+		.title { display:inline; font-size:20px; font-weight:600; color:#222; vertical-align:middle; }
+		.meta  { margin-top:14px; color:#95a5a6; font-size:12px; border-bottom:1px solid #eef1f5; padding-bottom:16px; }
+		.meta span { margin-right:20px; }
+		.content { margin-top:24px; line-height:1.8; font-size:14px; color:#333; word-break:break-word; }
+		.content img { max-width:100%; height:auto; border-radius:4px; }
+		.content p { margin:10px 0; }
+	</style>
+</head>
+<body>
+	<div class="wrap">
+		<div th:with="n=${notice}">
+			<div>
+				<span class="type-tag"
+					th:classappend="${n.noticeType}=='1'?'notice':'public'"
+					th:text="${n.noticeType}=='1'?'通知':'公告'"></span>
+				<h1 class="title" th:text="${n.noticeTitle}"></h1>
+			</div>
+			<div class="meta">
+				<span th:if="${n.createBy != null}"><i class="fa fa-user"></i>&nbsp;<span th:text="${n.createBy}"></span></span>
+				<span th:if="${n.createTimeText != null}"><i class="fa fa-clock-o"></i>&nbsp;<span th:text="${n.createTimeText}"></span></span>
+				<span><i class="fa fa-bookmark"></i>&nbsp;ID：<span th:text="${n.noticeId}"></span></span>
+			</div>
+			<div class="content" th:utext="${n.noticeContent}"></div>
+		</div>
+	</div>
+	<th:block th:include="include :: footer"/>
+</body>
+</html>

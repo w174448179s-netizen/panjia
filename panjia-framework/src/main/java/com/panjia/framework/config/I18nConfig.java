@@ -20,7 +20,26 @@ public class I18nConfig implements WebMvcConfigurer
     @Bean
     public LocaleResolver localeResolver()
     {
-        SessionLocaleResolver slr = new SessionLocaleResolver();
+        // 【关键】子类化 SessionLocaleResolver：解析 locale 读 HttpSession 失败时回落默认语言。
+        // 场景：带着上次的活会话再次免登（第二次打开钉钉应用）时，subject.login() 会替换旧 session，
+        // 但请求上下文里绑定的还是旧 sessionId 的 ShiroHttpSession；DispatcherServlet.render 阶段
+        // SessionLocaleResolver.resolveLocale 去读这个已删除的 session → UnknownSessionException
+        // → 已登录成功的响应被覆盖成 500。回落默认语言后不再触碰失效 session，问题消除。
+        SessionLocaleResolver slr = new SessionLocaleResolver()
+        {
+            @Override
+            public java.util.Locale resolveLocale(jakarta.servlet.http.HttpServletRequest request)
+            {
+                try
+                {
+                    return super.resolveLocale(request);
+                }
+                catch (Exception e)
+                {
+                    return Constants.DEFAULT_LOCALE;
+                }
+            }
+        };
         // 默认语言
         slr.setDefaultLocale(Constants.DEFAULT_LOCALE);
         return slr;

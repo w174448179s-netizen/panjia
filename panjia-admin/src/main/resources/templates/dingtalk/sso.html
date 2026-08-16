@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
+<title>钉钉登录中 · 诊断版</title>
+<link rel="shortcut icon" th:href="@{/favicon.ico}"/>
+<meta name="redirect" th:content="@{/dingtalk/login}"/>
+<meta name="corp-id" th:content="${corpId}"/>
+<style th:inline="none">
+html,body{margin:0;padding:0;background:linear-gradient(150deg,#0b0f19 0%,#111827 45%,#1a2332 100%);color:#f3f4f6;min-height:100vh;
+  font-family:-apple-system,PingFang SC,Microsoft YaHei,sans-serif;}
+.wrap{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px;box-sizing:border-box;}
+.spinner{width:42px;height:42px;border-radius:50%;border:4px solid rgba(255,255,255,.12);border-top-color:#ff5a00;
+  -webkit-animation:spin .9s linear infinite;animation:spin .9s linear infinite;margin:10px auto 14px;}
+@-webkit-keyframes spin{to{-webkit-transform:rotate(360deg);}}
+@keyframes spin{to{transform:rotate(360deg);}}
+h1{font-size:17px;margin:0 0 6px;letter-spacing:1px;}
+.tip{font-size:12px;color:#9ca3af;text-align:center;line-height:1.6;max-width:420px;}
+.brand{display:flex;align-items:center;gap:10px;margin-bottom:16px;}
+.brand .logo{width:36px;height:36px;border-radius:10px;background:#ff5a00;display:flex;align-items:center;justify-content:center;
+  box-shadow:0 6px 18px rgba(255,90,0,.35);}
+.brand .name{font-size:16px;font-weight:700;letter-spacing:1px;}
+.card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:20px 16px;max-width:460px;width:100%;
+  -webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);}
+.bar{margin-top:12px;height:3px;border-radius:3px;background:rgba(255,255,255,.08);overflow:hidden;}
+.bar::after{content:"";display:block;height:100%;width:30%;background:linear-gradient(90deg,#ff5a00,#ff9e6b);
+  -webkit-animation:shimmer 1.4s ease-in-out infinite;animation:shimmer 1.4s ease-in-out infinite;}
+@-webkit-keyframes shimmer{0%{-webkit-transform:translateX(-100%);}100%{-webkit-transform:translateX(400%);}}
+@keyframes shimmer{0%{transform:translateX(-100%);}100%{transform:translateX(400%);}}
+/* ============ 诊断面板 ============ */
+.diag{margin-top:14px;border-top:1px dashed rgba(255,255,255,.1);padding-top:10px;}
+.diag h3{font-size:12px;color:#6b7280;margin:0 0 8px;letter-spacing:1px;font-weight:500;}
+.diag ul{margin:0;padding:0;list-style:none;font-family:"SF Mono",Menlo,Consolas,"Courier New",monospace;font-size:11px;line-height:1.85;}
+.diag li{display:flex;gap:6px;padding:2px 0;border-bottom:1px solid rgba(255,255,255,.04);}
+.diag li .t{color:#6b7280;min-width:54px;flex:0 0 54px;}
+.diag li.ok .t{color:#10b981;}
+.diag li.warn .t{color:#f59e0b;}
+.diag li.err .t{color:#ef4444;}
+.diag li .v{color:#e5e7eb;word-break:break-all;flex:1;}
+.diag li.err .v{color:#fca5a5;}
+.pre{background:rgba(0,0,0,.35);padding:8px 10px;border-radius:8px;font-family:"SF Mono",Menlo,Consolas,"Courier New",monospace;font-size:10.5px;
+  line-height:1.6;color:#d1d5db;white-space:pre-wrap;word-break:break-all;max-height:120px;overflow:auto;margin-top:4px;}
+a.btn{display:inline-block;margin-top:12px;padding:8px 14px;background:linear-gradient(135deg,#ff5a00,#ff8a3d);color:#fff;text-decoration:none;
+  border-radius:8px;font-size:12px;font-weight:600;letter-spacing:1px;}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <div class="brand">
+        <div class="logo">
+          <svg width="24" height="24" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+            <path d="M52 112 L100 70 L148 112" fill="none" stroke="#fff" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"></path>
+            <line x1="100" y1="112" x2="100" y2="150" stroke="#fff" stroke-width="18" stroke-linecap="round"></line>
+            <line x1="68" y1="112" x2="68" y2="150" stroke="#fff" stroke-width="12" stroke-linecap="round"></line>
+            <line x1="132" y1="112" x2="132" y2="150" stroke="#fff" stroke-width="12" stroke-linecap="round"></line>
+          </svg>
+        </div>
+        <div class="name">盘家 · 门店经营系统</div>
+      </div>
+      <h1 id="title">正在通过钉钉登录…</h1>
+      <div class="spinner" id="spin"></div>
+      <p class="tip" id="tip">请稍候，页面加载完成后将获取免登授权码。</p>
+      <div class="bar" id="bar"></div>
+
+      <div class="diag">
+        <h3>📋 免登链路诊断（实时）</h3>
+        <ul id="diagList">
+          <li><span class="t">00:00.0</span><span class="v">页面初始化…</span></li>
+        </ul>
+        <div class="pre" id="diagPre" style="display:none;"></div>
+      </div>
+
+      <a class="btn" href="#" onclick="submitForm('');return false;">无法登录？点击这里继续</a>
+    </div>
+  </div>
+
+  <script th:inline="none">
+/*
+ =============================================================================
+  【诊断增强版 sso.html】
+
+  核心策略：
+   1) 页面 load 事件触发后才开始干活 → WKWebView 3s 超时 kill 解除 ✅
+   2) SDK 加载：本地 /js/dingtalk.open.js + CDN 备选并行注入，谁先加载完用谁
+   3) 每一步（页面加载 / SDK 注入 / dd 存在性 / corpId / dd.ready / requestAuthCode
+      成功/失败 JSON）都实时渲染到卡片底部的诊断面板，便于在钉钉客户端内直接
+      肉眼观察，不用翻服务端日志
+
+  输出结构：每个 li 有 time + level(ok/warn/err) + message 三段
+ =============================================================================
+*/
+var REDIRECT = '/dingtalk/login';
+var CONFIG_CORP_ID = '';
+try {
+  var m = document.querySelector('meta[name=redirect]'); if (m) REDIRECT = m.content || REDIRECT;
+  var mc = document.querySelector('meta[name=corp-id]'); if (mc) CONFIG_CORP_ID = (mc.content || '').trim();
+} catch(e) {}
+
+var submitted = false;
+var tStart = +new Date();
+var diagList = document.getElementById('diagList');
+var diagPre  = document.getElementById('diagPre');
+var diagRaw = [];
+
+function ts() {
+  var ms = (+new Date()) - tStart;
+  var s = Math.floor(ms / 1000), m = Math.floor(s / 60);
+  s = s % 60; ms = ms % 1000;
+  function z(n, w) { n = String(n); while (n.length < w) n = '0' + n; return n; }
+  return z(m,2) + ':' + z(s,2) + '.' + z(ms,3);
+}
+function log(level, msg, raw) {
+  var cls = (level === 'ok') ? 'ok' : (level === 'warn' ? 'warn' : (level === 'err' ? 'err' : ''));
+  var li = document.createElement('li');
+  if (cls) li.className = cls;
+  li.innerHTML = '<span class="t">' + ts() + '</span><span class="v"></span>';
+  li.getElementsByTagName('span')[1].textContent = msg;
+  diagList.appendChild(li);
+  if (raw !== undefined && raw !== null) {
+    diagRaw.push(msg + '  ' + (typeof raw === 'string' ? raw : JSON.stringify(raw)));
+    diagPre.style.display = 'block';
+    diagPre.textContent = diagRaw.join('\n');
+  }
+  // 滚动到底
+  try { li.scrollIntoView({behavior:'smooth', block:'nearest'}); } catch(e) {}
+}
+function logOk(m,r)   { log('ok',   m, r); }
+function logWarn(m,r) { log('warn', m, r); }
+function logErr(m,r)  { log('err',  m, r); }
+
+function mask(s, n) {
+  if (!s) return '(空)';
+  if (s.length <= (n||6)*2) return s;
+  return s.slice(0, n||6) + '***' + s.slice(-(n||6));
+}
+
+function submitForm(code) {
+  if (submitted) return;
+  submitted = true;
+  try {
+    var f = document.getElementById('fallbackForm');
+    f.elements.namedItem('code').value = code || '';
+    logOk('提交表单 → ' + REDIRECT + '  code=' + (code ? mask(code, 5) : '(空)'));
+    f.submit();
+  } catch(e) {
+    logErr('submitForm 异常: ' + (e && e.message || e));
+    try { location.href = REDIRECT + (code ? '?code=' + encodeURIComponent(code) : ''); } catch(e2) {}
+  }
+}
+
+/* ============ SDK 串行降级加载：本地 → unpkg → jsdelivr（一个失败才试下一个） ============
+   注意：不要并行加载！花生壳并发连接上限约 4-6 条，3 个 SDK 源并行 + 页面连接 +
+   sendBeacon 同时开，会在表单提交瞬间挤爆限额，连接被掐 → NSURLErrorNetworkConnectionLost。
+   本地 /js/dingtalk.open.js 已随应用部署，正常情况 0 外部请求。 */
+var SDK_SOURCES = [
+  { name: '本地 /js/dingtalk.open.js', url: '/js/dingtalk.open.js' },
+  { name: 'CDN unpkg', url: 'https://unpkg.com/dingtalk-jsapi@2/umd/dingtalk.open.js' },
+  { name: 'CDN jsdelivr', url: 'https://cdn.jsdelivr.net/npm/dingtalk-jsapi@2/umd/dingtalk.open.js' }
+];
+function loadOneSdk(src, name) {
+  return new Promise(function(resolve) {
+    var s = document.createElement('script');
+    s.type = 'text/javascript';
+    s.async = true;
+    s.src = src;
+    s.onload  = function() { resolve({name:name, ok:true}); };
+    s.onerror = function() { resolve({name:name, ok:false}); };
+    try { (document.head || document.documentElement).appendChild(s); }
+    catch(e) { resolve({name:name, ok:false, err:e && e.message}); }
+  });
+}
+async function loadSdkWithFallback() {
+  var started = +new Date();
+  for (var i = 0; i < SDK_SOURCES.length; i++) {
+    var r = await loadOneSdk(SDK_SOURCES[i].url, SDK_SOURCES[i].name);
+    if (r.ok) { logOk('SDK 加载成功: ' + r.name + '  耗时=' + ((+new Date()) - started) + 'ms'); return true; }
+    logWarn('SDK 源失败: ' + r.name, r.err);
+  }
+  logWarn('所有 SDK 源加载失败（移动端可能已注入 window.dd，继续）');
+  return false;
+}
+
+/* ============ 检测 window.dd 是否可用 ============ */
+function isDDRuntimeReady() {
+  return typeof dd !== 'undefined' && dd && typeof dd.runtime !== 'undefined'
+    && dd.runtime && (typeof dd.runtime.permission === 'object' || typeof dd.ready === 'function');
+}
+function pollDDRuntime(maxTimes, intervalMs) {
+  return new Promise(function(resolve) {
+    var n = 0;
+    function tick() {
+      if (isDDRuntimeReady()) { resolve(true); return; }
+      if (++n >= maxTimes) { resolve(false); return; }
+      setTimeout(tick, intervalMs);
+    }
+    tick();
+  });
+}
+
+/* ============ requestAuthCode 调用（对成功/失败都完整打 JSON 到诊断面板） ============
+   注意：企业内部应用免登【不要】调用 dd.config —— 空 signature 的 config 在部分钉钉客户端
+   版本会触发 config fail 并禁用 jsapi 权限，导致 requestAuthCode 偶发失败。
+   requestAuthCode 属于免登基础能力，无需 config 鉴权即可调用。 */
+function callRequestAuthCode(corpId) {
+  return new Promise(function(resolve) {
+    if (!corpId) {
+      logErr('corpId 为空，无法调用 requestAuthCode');
+      resolve('');
+      return;
+    }
+    try {
+      var api = dd.runtime && dd.runtime.permission && dd.runtime.permission.requestAuthCode;
+      if (typeof api !== 'function') {
+        // 尝试老版 API（个别 SDK 版本的别名）
+        api = typeof dd !== 'undefined' && ((dd.biz && dd.biz.user && dd.biz.user.getAuthCode) || dd.getUserInfo || null);
+        if (typeof api === 'function') logWarn('requestAuthCode 不可用，回退旧版 API');
+        else { logErr('未找到 requestAuthCode / getAuthCode 方法，当前 dd.runtime.permission = ' +
+                 (typeof dd.runtime.permission)); resolve(''); return; }
+      }
+
+      log('info', '开始调用 runtime.permission.requestAuthCode  corpId=' + mask(corpId));
+      var done = false;
+      api.call(dd, {
+        corpId: corpId,
+        onSuccess: function(r) {
+          if (done) return; done = true;
+          logOk('requestAuthCode onSuccess', r);
+          var code = r && r.code ? r.code : (typeof r === 'string' ? r : '');
+          resolve(code || '');
+        },
+        onFail: function(err) {
+          if (done) return; done = true;
+          logErr('requestAuthCode onFail', err);
+          resolve('');
+        }
+      });
+      // 回调超时 4 秒
+      setTimeout(function() {
+        if (done) return; done = true;
+        logErr('requestAuthCode 回调超时 4s');
+        resolve('');
+      }, 4000);
+    } catch(e) {
+      logErr('requestAuthCode 异常', e && e.stack || e && e.message || String(e));
+      resolve('');
+    }
+  });
+}
+
+/* ============ 主流程 ============ */
+function startFlow() {
+  (async function() {
+    // Step 0: 页面环境
+    var ua = (typeof navigator !== 'undefined' ? navigator.userAgent || '' : '');
+    var isDT = /DingTalk/i.test(ua);
+    var isPC = /webDt\/PC/i.test(ua);
+    log((isDT?'ok':'warn'),
+      '环境: DingTalk=' + (isDT?'✅':'❌') + '  webDt/PC=' + (isPC?'✅':'—') +
+      '  UA=' + (ua ? mask(ua, 30) : '(空)'));
+    log('info', 'meta corpId = ' + (CONFIG_CORP_ID ? mask(CONFIG_CORP_ID, 6) + '  len=' + CONFIG_CORP_ID.length : '(空)'));
+
+    // Step 1: 如果 window.dd 已经注入（移动端），直接用
+    if (isDDRuntimeReady()) {
+      logOk('检测到已注入的 window.dd（移动端/容器内置），跳过 SDK 下载');
+    } else {
+      // 先快速轮询 200ms（可能是页面刚 load，dd 还没注入完）
+      var quickOk = await pollDDRuntime(5, 40);
+      if (quickOk) {
+        logOk('200ms 内检测到 window.dd 注入完成');
+      } else {
+        // 走 SDK 加载
+        log('info', '未检测到 window.dd，开始加载钉钉 JS-SDK（并行多源 + CDN 兜底）');
+        await loadSdkWithFallback();
+        // 再给 3 秒等 SDK 注入 dd.runtime
+        var afterOk = await pollDDRuntime(30, 100);
+        if (afterOk) logOk('SDK 加载后 dd.runtime 可用');
+        else logWarn('SDK 加载后 dd.runtime 仍未就绪（可能浏览器直接访问 / 非钉钉容器）');
+      }
+    }
+
+    // Step 2: 打印 dd 信息
+    try {
+      var info = {};
+      info['typeof dd'] = typeof dd;
+      if (typeof dd !== 'undefined') {
+        info['dd.env'] = dd.env;
+        info['dd.corpId'] = dd.corpId ? mask(String(dd.corpId), 6) : '(空)';
+        info['typeof dd.ready'] = typeof dd.ready;
+        info['typeof dd.config'] = typeof dd.config;
+        info['typeof dd.runtime'] = typeof dd.runtime;
+        info['typeof dd.runtime.permission'] = (dd.runtime && typeof dd.runtime.permission);
+        info['typeof dd.runtime.permission.requestAuthCode'] =
+          (dd.runtime && dd.runtime.permission && typeof dd.runtime.permission.requestAuthCode);
+      }
+      log((typeof dd !== 'undefined' ? 'ok' : 'warn'), 'dd 快照', info);
+    } catch(e) {
+      logWarn('dd 快照异常', e && e.message || String(e));
+    }
+
+    // Step 3: 取 corpId（meta > dd.corpId > 空）
+    var corpId = CONFIG_CORP_ID;
+    if (!corpId) { try { if (typeof dd !== 'undefined' && dd.corpId) corpId = String(dd.corpId); } catch(e) {} }
+    if (!corpId) {
+      logErr('corpId 最终为空，请在后台「系统管理 → 通知配置」中配置 dingtalk.corp_id');
+      setTimeout(function() { submitForm(''); }, 2000);
+      return;
+    }
+
+    // Step 4: devConfig 打开 debug 日志（不调 dd.config，见上方说明）
+    try {
+      if (typeof dd !== 'undefined' && dd && typeof dd.devConfig === 'function') {
+        dd.devConfig({debug: true});
+      }
+    } catch(e) {}
+
+    // Step 5: dd.ready 等待，最长 2.5 秒
+    var readyFired = false;
+    function fireRequest() {
+      if (readyFired) return;
+      readyFired = true;
+      (async function() {
+        var code = await callRequestAuthCode(corpId);
+        logOk('code 最终 = ' + (code ? mask(code, 6) : '(空)'));
+        submitForm(code);
+      })();
+    }
+    try {
+      if (typeof dd !== 'undefined' && typeof dd.ready === 'function') {
+        dd.ready(function() { logOk('dd.ready 回调触发'); fireRequest(); });
+        if (typeof dd.error === 'function') dd.error(function(e) { logWarn('dd.error 触发', e); });
+        setTimeout(function() { if (!readyFired) { logWarn('dd.ready 超时 2.5s，强行执行'); fireRequest(); } }, 2500);
+      } else {
+        logWarn('dd.ready 不存在，直接调 requestAuthCode');
+        fireRequest();
+      }
+    } catch(e) {
+      logErr('dd.ready 异常', e && e.stack || e && e.message || String(e));
+      fireRequest();
+    }
+  })();
+}
+
+/* ============ 启动：页面 load 后 30ms（确保 WKWebView 写入"页面完成"状态） ============ */
+function boot() {
+  // 先立即打一条「页面已加载完成」，这是给 WKWebView 看的
+  logOk('页面加载完成 → 解除 WKWebView 超时监控 ✅');
+  setTimeout(startFlow, 30);
+}
+if (document.readyState === 'complete') {
+  boot();
+} else {
+  window.addEventListener('load', boot);
+}
+
+/* 最终兜底：15 秒后无论如何都提交（页面已完成 load，不再受 3 秒硬超时限制） */
+setTimeout(function() {
+  if (!submitted) { logWarn('15 秒总兜底触发'); submitForm(''); }
+}, 15000);
+  </script>
+
+  <form id="fallbackForm" th:action="@{/dingtalk/login}" method="post" accept-charset="UTF-8" style="display:none;">
+    <input type="hidden" name="code" value=""/>
+    <input type="hidden" name="state" value=""/>
+  </form>
+</body>
+</html>

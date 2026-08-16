@@ -203,22 +203,100 @@ public class HttpUtils
         return result.toString();
     }
 
+    public static String sendSSLGet(String url)
+    {
+        return sendSSLGet(url, StringUtils.EMPTY);
+    }
+
+    /**
+     * SSL GET 请求（跳过证书校验，用于自签或复杂网络环境）
+     * @param url URL
+     * @param param query 参数，形如 a=1&b=2；可为空
+     */
+    public static String sendSSLGet(String url, String param)
+    {
+        StringBuilder result = new StringBuilder();
+        String urlNameString = StringUtils.isNotBlank(param) ? url + "?" + param : url;
+        BufferedReader br = null;
+        try
+        {
+            log.info("sendSSLGet - {}", urlNameString);
+            SSLContext sc = SSLContext.getInstance("TLS");
+            sc.init(null, new TrustManager[] { new TrustAnyTrustManager() }, new java.security.SecureRandom());
+            URL console = new URL(urlNameString);
+            HttpsURLConnection conn = (HttpsURLConnection) console.openConnection();
+            conn.setRequestMethod("GET");
+            conn.setRequestProperty("accept", "*/*");
+            conn.setRequestProperty("connection", "Keep-Alive");
+            conn.setRequestProperty("user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)");
+            conn.setRequestProperty("Accept-Charset", "utf-8");
+            conn.setSSLSocketFactory(sc.getSocketFactory());
+            conn.setHostnameVerifier(new TrustAnyHostnameVerifier());
+            conn.setConnectTimeout(10000);
+            conn.setReadTimeout(30000);
+            conn.connect();
+            InputStream is = conn.getInputStream();
+            br = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8));
+            String ret;
+            while ((ret = br.readLine()) != null)
+            {
+                if (ret != null && !"".equals(ret.trim()))
+                {
+                    result.append(ret);
+                }
+            }
+            log.info("recv - {}", result.length() > 1000 ? result.substring(0, 1000) + "..." : result);
+            conn.disconnect();
+        }
+        catch (ConnectException e)
+        {
+            log.error("调用HttpUtils.sendSSLGet ConnectException, url=" + url + ",param=" + param, e);
+        }
+        catch (SocketTimeoutException e)
+        {
+            log.error("调用HttpUtils.sendSSLGet SocketTimeoutException, url=" + url + ",param=" + param, e);
+        }
+        catch (IOException e)
+        {
+            log.error("调用HttpUtils.sendSSLGet IOException, url=" + url + ",param=" + param, e);
+        }
+        catch (Exception e)
+        {
+            log.error("调用HttpsUtil.sendSSLGet Exception, url=" + url + ",param=" + param, e);
+        }
+        finally
+        {
+            try { if (br != null) br.close(); } catch (IOException ex) { /* ignore */ }
+        }
+        return result.toString();
+    }
+
     public static String sendSSLPost(String url, String param)
     {
         return sendSSLPost(url, param, MediaType.APPLICATION_FORM_URLENCODED_VALUE);
     }
 
+    /**
+     * SSL POST 请求。
+     * 说明：
+     *  - 当 contentType 为 application/x-www-form-urlencoded（默认）时，param 既拼 query 又写 body，兼容旧调用方。
+     *  - 其他 contentType（如 application/json）：param 只写 body，不拼 URL。
+     */
     public static String sendSSLPost(String url, String param, String contentType)
     {
         StringBuilder result = new StringBuilder();
-        String urlNameString = url + "?" + param;
+        boolean isForm = MediaType.APPLICATION_FORM_URLENCODED_VALUE.equalsIgnoreCase(contentType);
+        String urlNameString = (isForm && StringUtils.isNotBlank(param)) ? url + "?" + param : url;
+        PrintWriter out = null;
+        BufferedReader br = null;
         try
         {
-            log.info("sendSSLPost - {}", urlNameString);
-            SSLContext sc = SSLContext.getInstance("SSL");
+            log.info("sendSSLPost - {} bodyLen={}", urlNameString, param == null ? 0 : param.length());
+            SSLContext sc = SSLContext.getInstance("TLS");
             sc.init(null, new TrustManager[] { new TrustAnyTrustManager() }, new java.security.SecureRandom());
             URL console = new URL(urlNameString);
             HttpsURLConnection conn = (HttpsURLConnection) console.openConnection();
+            conn.setRequestMethod("POST");
             conn.setRequestProperty("accept", "*/*");
             conn.setRequestProperty("connection", "Keep-Alive");
             conn.setRequestProperty("user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)");
@@ -226,23 +304,29 @@ public class HttpUtils
             conn.setRequestProperty("Content-Type", contentType);
             conn.setDoOutput(true);
             conn.setDoInput(true);
-
+            conn.setConnectTimeout(10000);
+            conn.setReadTimeout(30000);
             conn.setSSLSocketFactory(sc.getSocketFactory());
             conn.setHostnameVerifier(new TrustAnyHostnameVerifier());
             conn.connect();
+            if (StringUtils.isNotBlank(param))
+            {
+                out = new PrintWriter(conn.getOutputStream());
+                out.print(param);
+                out.flush();
+            }
             InputStream is = conn.getInputStream();
-            BufferedReader br = new BufferedReader(new InputStreamReader(is));
-            String ret = "";
+            br = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8));
+            String ret;
             while ((ret = br.readLine()) != null)
             {
                 if (ret != null && !"".equals(ret.trim()))
                 {
-                    result.append(new String(ret.getBytes(StandardCharsets.ISO_8859_1), StandardCharsets.UTF_8));
+                    result.append(ret);
                 }
             }
-            log.info("recv - {}", result);
+            log.info("recv - {}", result.length() > 1000 ? result.substring(0, 1000) + "..." : result);
             conn.disconnect();
-            br.close();
         }
         catch (ConnectException e)
         {
@@ -259,6 +343,11 @@ public class HttpUtils
         catch (Exception e)
         {
             log.error("调用HttpsUtil.sendSSLPost Exception, url=" + url + ",param=" + param, e);
+        }
+        finally
+        {
+            try { if (out != null) out.close(); } catch (Exception ex) { /* ignore */ }
+            try { if (br != null) br.close(); } catch (IOException ex) { /* ignore */ }
         }
         return result.toString();
     }

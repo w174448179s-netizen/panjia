@@ -41,6 +41,12 @@ public class SysLoginController extends BaseController
         }
         // 是否开启记住我
         mmap.put("isRemembered", rememberMe);
+        // 钉钉免登状态参数（由 DingTalkLoginController 302 跳转带过来），login.html 负责渲染提示
+        mmap.put("dtErr",    request.getParameter("dt_err")  == null ? "" : request.getParameter("dt_err"));
+        mmap.put("dtInfo",   request.getParameter("info")    == null ? "" : request.getParameter("info"));
+        mmap.put("dt",       request.getParameter("dt")      == null ? "" : request.getParameter("dt"));
+        mmap.put("dtMobile", request.getParameter("mobile")  == null ? "" : request.getParameter("mobile"));
+        mmap.put("dtUserid", request.getParameter("userid")  == null ? "" : request.getParameter("userid"));
         return "login";
     }
 
@@ -48,6 +54,7 @@ public class SysLoginController extends BaseController
     @ResponseBody
     public AjaxResult ajaxLogin(String username, String password, Boolean rememberMe)
     {
+        if (rememberMe == null) { rememberMe = Boolean.FALSE; }
         UsernamePasswordToken token = new UsernamePasswordToken(username, password, rememberMe);
         Subject subject = SecurityUtils.getSubject();
         try

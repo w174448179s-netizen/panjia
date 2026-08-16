@@ -83,6 +83,45 @@
         <div class="ver">本地部署 · 数据不出店</div>
       </div>
 
+      <!-- 钉钉免登状态提示（从 DingTalkLoginController 302 跳回时带 dt 参数）-->
+      <div class="card" style="padding:14px 18px;margin-bottom:18px;display:none;"
+           th:if="${dtErr != null and dtErr != '' or dt != null and (dt == 'no_bind' or dt == 'logout')}"
+           th:style="'padding:14px 18px;margin-bottom:18px;'">
+        <!-- 免登失败通用错误 -->
+        <div th:if="${dtErr != null and dtErr != ''}" style="font-size:13px;">
+          <div style="display:flex;align-items:flex-start;gap:10px;">
+            <span style="font-size:18px;">⚠️</span>
+            <div>
+              <div style="color:#ffb78a;font-weight:700;margin-bottom:4px;"
+                   th:text="|钉钉免登失败（${dtErr}）|">钉钉免登失败</div>
+              <div style="color:#cbd5e1;line-height:1.7;"
+                   th:if="${dtInfo != null and dtInfo != ''}" th:text="${dtInfo}"></div>
+              <div style="color:#9ca3af;line-height:1.7;margin-top:6px;">
+                可尝试：①用账号密码登录；②确认通知配置中的钉钉参数正确 → 保存后通过【立即同步组织与人员】把钉钉员工同步进系统。
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- 未绑定系统用户（钉钉有这个人，但本地 sys_user 没找到）-->
+        <div th:if="${dt != null and dt == 'no_bind'}" style="font-size:13px;">
+          <div style="display:flex;align-items:flex-start;gap:10px;">
+            <span style="font-size:18px;">🧑‍💼</span>
+            <div>
+              <div style="color:#ffb78a;font-weight:700;margin-bottom:4px;">当前钉钉账号未在系统开户</div>
+              <div style="color:#cbd5e1;line-height:1.7;">
+                <span th:if="${dtMobile != null and dtMobile != ''}">钉钉手机号：<b th:text="${dtMobile}"></b><br/></span>
+                <span th:if="${dtUserid != null and dtUserid != ''}">钉钉 UserId：<b th:text="${dtUserid}"></b><br/></span>
+                请联系管理员在【通知配置】里点 <b>「立即同步组织与人员」</b>，或在【用户管理】手动创建用户并绑定手机号。
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- 退出成功提示 -->
+        <div th:if="${dt != null and dt == 'logout'}" style="font-size:13px;color:#9ca3af;">
+          钉钉登录会话已退出本地。若要再次使用免登，请从钉钉工作台应用入口进入。
+        </div>
+      </div>
+
       <!-- 登录卡 -->
       <div class="card">
         <form id="signupForm" autocomplete="off">
