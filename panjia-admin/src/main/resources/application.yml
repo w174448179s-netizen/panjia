@@ -38,11 +38,12 @@ server:
   # 否则 Tomcat 用「代理→应用」这一跳的 http://localhost:8080 拼重定向 Location，导致 https 丢失
   forward-headers-strategy: native
   tomcat:
-    # ===== 访问日志：排查钉钉 WebView 断连必备（记录每个到达的请求+耗时），排障后可关闭 =====
+    # ===== 访问日志：仅排障时临时开启（会记录每个请求的 Cookie，日常关闭避免敏感信息落盘）=====
+    # 排障开启时建议 pattern 加 cookie=[%{Cookie}i]
     accesslog:
-      enabled: true
+      enabled: false
       directory: logs/access
-      pattern: '%h %t "%r" %s %b %Dms cookie=[%{Cookie}i] %{User-Agent}i'
+      pattern: '%h %t "%r" %s %b %Dms %{User-Agent}i'
     # tomcat的URI编码
     uri-encoding: UTF-8
     # 连接数满后的排队数，默认为100

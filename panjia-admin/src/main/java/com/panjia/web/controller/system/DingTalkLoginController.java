@@ -5,8 +5,6 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.LinkedHashMap;
-import java.util.Map;
 
 import javax.sql.DataSource;
 
@@ -21,12 +19,10 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.panjia.common.annotation.Anonymous;
 import com.panjia.common.constant.ShiroConstants;
 import com.panjia.common.core.controller.BaseController;
-import com.panjia.common.core.domain.AjaxResult;
 import com.panjia.common.core.domain.entity.SysUser;
 import com.panjia.common.utils.ShiroUtils;
 import com.panjia.common.utils.StringUtils;
@@ -42,28 +38,24 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.ui.ModelMap;
 
 /**
- * 钉钉免登入口控制器
+ * 钉钉 H5 微应用免登控制器
  * <p>
- * 钉钉工作台点击 H5 应用时，钉钉**不会**自动在 URL 上追加 authCode，必须通过 JSAPI 主动获取。
- * 因此推荐把钉钉控制台「应用首页地址」配置为 「https://域名/dingtalk/sso」，
- * 由 /dingtalk/sso 页面加载钉钉 JSAPI SDK，调用 dd.runtime.permission.requestAuthCode 拿到 authCode 后，
- * 再通过 POST 表单跳转到 /dingtalk/login（防反代吞 query）完成后端免登。
+ * 钉钉工作台点击应用时固定打开「应用首页地址」（建议配置为 /dingtalk/sso），不会自动附带 authCode，
+ * 必须由页面加载 JSAPI 主动获取。本控制器实现完整免登链路：
  * <ul>
- *   <li>入口：钉钉控制台 → 应用首页地址填 「https://域名/dingtalk/sso」
- *       <br>/dingtalk/sso 页面加载 JSAPI → dd.runtime.permission.requestAuthCode（corpId 来自 sys_config.dingtalk.corp_id，
- *       新版 SDK 不再在 dd 对象上自动注入，必须后端读取后注入前端）→
- *       拿到 authCode → POST 表单提交 code/state 到 /dingtalk/login</li>
- *   <li>/dingtalk/login（GET/POST）：收到 code → 调钉钉 /topapi/v2/user/getuserinfo 换 userid → 再调 /topapi/v2/user/get 补全手机号</li>
+ *   <li>GET /dingtalk/sso：入口页。带有效会话 → 直接渲染 dtok 跳 /index（已登录快检）；
+ *       否则渲染 sso 页（corpId 由 sys_config.dingtalk.corp_id 服务端注入，新版 SDK 不再自动注入 dd.corpId），
+ *       由前端 JSAPI requestAuthCode 取 authCode 后 POST 表单到 /dingtalk/login</li>
+ *   <li>POST /dingtalk/login：code → 钉钉 user/getuserinfo 换 userid → user/get 补全手机号 →
+ *       按 dingtalk_userid/手机号/邮箱匹配本地用户 → Shiro 免密登录 → <b>直接渲染 dtok 中转页（200，不发 302，
+ *       钉钉 WKWebView 对导航 302 跟随不可靠）</b> → 前端 JS 跳 /index</li>
  * </ul>
- * 后端流程：
- *   1) GET /dingtalk/login?code=authCode → 调钉钉 topapi/v2/user/getuserinfo（企业 access_token + authCode）换 userid
- *   2) 调 topapi/v2/user/get（access_token + userid）补全手机号、姓名（需「成员信息读权限」qyapi_get_member）
- *   3) 优先按 dingtalk_userid（绑定过更快）→ 再按手机号 → 兜底邮箱 → 匹配本地 sys_user
- *   4) 匹配成功：DingTalkSsoToken → Shiro 免密登录 → 302 到 /index
- *   5) 未匹配：302 到 /login?dt=no_bind&mobile=xxx&userid=xxx → 登录页提示联系管理员开户 / 先同步组织
- * <p>
- * 附带调试接口（匿名只读非敏感，便于现场核对参数）：
- *   - POST /dingtalk/config → 展示 enabled/appId/agentId/clientId 和 access_token 获取是否正常
+ * 关键约束（历史排障结论，勿回退）：
+ * <ul>
+ *   <li>登录成功路径禁用 302（WebView 不跟随，报 NSURLErrorNetworkConnectionLost），统一直渲染</li>
+ *   <li>不显式 subject.logout()（同请求收尾阶段回读旧 session 会 500）</li>
+ *   <li>Cookie 由 ShiroConfig 的 sessionIdCookie 模板统一写出（SameSite=Lax + Secure），单一来源</li>
+ * </ul>
  *
  * @author panjia
  */
@@ -120,20 +112,23 @@ public class DingTalkLoginController extends BaseController
             ModelMap mmap,
             String method) throws IOException
     {
-        // ===== 诊断日志：每次进入都打全请求 URL / query / 参数名 / 关键头，便于排查"code 为空" =====
+        // ===== 轻量防滥用：单 IP 60 秒内最多 10 次免登尝试（含空 code），超出直接 429 =====
+        // 此接口是仅存的匿名业务口，防外部扫描器刷请求（每次空 code 都要打日志+302）和暴力探测
+        if (!rateLimitAllow(request))
+        {
+            log.warn("[DingTalk免登] IP 请求过于频繁，已限流：{}", clientIp(request));
+            response.sendError(429, "请求过于频繁，请稍后再试");
+            return null;
+        }
+
+        // ===== 简要诊断日志：method/参数名/code前缀/referer（排障够用，避免每请求打全量头） =====
         String fullUrl = request.getRequestURL().toString()
                 + (request.getQueryString() == null ? "" : "?" + request.getQueryString());
-        java.util.Enumeration<String> pnames = request.getParameterNames();
-        java.util.List<String> pnameList = new java.util.ArrayList<>();
-        while (pnames.hasMoreElements()) pnameList.add(pnames.nextElement());
-        log.info("[DingTalk免登] 收到请求 method={} fullUrl={} | parameterMap.keys={} | code={} | state={} | referer={} | ua={} | xff={} | xfProto={}",
-                method, fullUrl, pnameList,
+        log.info("[DingTalk免登] 收到请求 method={} fullUrl={} | code={} | state={} | referer={}",
+                method, fullUrl,
                 authCode == null ? "(null)" : (authCode.isEmpty() ? "(empty)" : authCode.substring(0, Math.min(8, authCode.length())) + "..."),
                 state == null ? "(null)" : state,
-                nvl(request.getHeader("referer")),
-                nvl(request.getHeader("user-agent")),
-                nvl(request.getHeader("x-forwarded-for")),
-                nvl(request.getHeader("x-forwarded-proto")));
+                nvl(request.getHeader("referer")));
 
         String errCode = "";
         String info = "";
@@ -149,10 +144,8 @@ public class DingTalkLoginController extends BaseController
             errCode = "no_code"; info = "未接收到钉钉免登授权码 code，请从钉钉工作台应用入口进入（应用首页地址需配置为：https://域名/dingtalk/sso）。"
                     + "若从钉钉工作台点击仍无 code，请检查钉钉控制台「应用首页地址」是否为 /dingtalk/sso，以及应用是否已发布；"
                     + "当前请求 method=" + method + "，若为 POST 且无 code 通常说明前端 requestAuthCode 失败后走了兜底表单提交，请查看 [DingTalkSSO-Trace] 诊断日志定位 JSAPI 失败原因。";
-            log.warn("[DingTalk免登] 进入 /dingtalk/login 但 code 为空。method={} fullUrl={} params={} referer={} "
-                    + "→ 典型原因：1) 直接在浏览器粘贴地址测试（钉钉不会注入code）；2) 钉钉控制台首页地址非 /dingtalk/sso；"
-                    + "3) sso 页面 JSAPI requestAuthCode 失败走了兜底（见 [DingTalkSSO-Trace] 日志）",
-                    method, fullUrl, pnameList, nvl(request.getHeader("referer")));
+            log.warn("[DingTalk免登] 进入 /dingtalk/login 但 code 为空。method={} fullUrl={} referer={}",
+                    method, fullUrl, nvl(request.getHeader("referer")));
         }
 
         if (StringUtils.isNotBlank(errCode))
@@ -245,69 +238,7 @@ public class DingTalkLoginController extends BaseController
         }
     }
 
-    // ================== 退出：清理本地 Shiro Session（钉钉会话仍保持） ==================
-
-    @Anonymous
-    @GetMapping("/logout")
-    public String dingtalkLogout()
-    {
-        try { ShiroUtils.getSubject().logout(); } catch (Exception ignore) { /* ignore */ }
-        return "redirect:/login?dt=logout";
-    }
-
-    // ================== 诊断：前端 sso 页把 JSAPI 各阶段日志通过 sendBeacon 回传这里 ==================
-
-    @Anonymous
-    @PostMapping("/log")
-    @ResponseBody
-    public AjaxResult traceLog(
-            @RequestParam(value = "step",  required = false) String step,
-            @RequestParam(value = "corpId",required = false) String corpId,
-            @RequestParam(value = "codeLen", required = false) String codeLen,
-            @RequestParam(value = "codePrefix", required = false) String codePrefix,
-            @RequestParam(value = "err", required = false) String err,
-            @RequestParam(value = "ua",  required = false) String ua,
-            @RequestParam(value = "href",required = false) String href,
-            HttpServletRequest request)
-    {
-        String ip = StringUtils.isBlank(request.getHeader("x-forwarded-for")) ? request.getRemoteAddr() : request.getHeader("x-forwarded-for");
-        log.info("[DingTalkSSO-Trace] step={} corpId={} codeLen={} codePrefix={} ua={} href={} clientIp={} err={}",
-                nvl(step), maskCorp(corpId), nvl(codeLen), nvl(codePrefix),
-                nvl(ua == null ? request.getHeader("user-agent") : ua),
-                maskHref(href), ip, nvl(err));
-        return success();
-    }
-
-    private String maskCorp(String s){ if (StringUtils.isBlank(s)) return s; if (s.length() <= 6) return "***"; return s.substring(0,3) + "***" + s.substring(s.length()-3); }
-    private String maskHref(String s){ if (StringUtils.isBlank(s)) return s; int q = s.indexOf('?'); if (q < 0) return s; return s.substring(0, q) + "?***"; }
-
-    // ================== 调试接口：只读展示非敏感配置，便于现场核对参数（匿名访问，便于钉钉手机端自测） ==================
-
-    @Anonymous
-    @PostMapping("/config")
-    @ResponseBody
-    public AjaxResult debugConfig()
-    {
-        Map<String, Object> m = new LinkedHashMap<>();
-        m.put("enabled",       dingTalkCfg.isEnabled());
-        m.put("appId",         nvl(dingTalkCfg.getAppId()));
-        m.put("agentId",       nvl(dingTalkCfg.getAgentIdStr()));
-        m.put("clientId",      nvl(dingTalkCfg.getClientId()));
-        m.put("clientSecret",  StringUtils.isBlank(dingTalkCfg.getClientSecret()) ? "" : "******");
-        // 尝试拿一次 token，校验是否配置正确
-        try {
-            String token = dingTalk.getAccessToken();
-            m.put("tokenOk", true);
-            m.put("tokenLen", token == null ? 0 : token.length());
-            m.put("tokenHint", token == null ? "" : token.substring(0, Math.min(6, token.length())) + "...");
-        } catch (Exception e) {
-            m.put("tokenOk", false);
-            m.put("tokenErr", e.getMessage());
-        }
-        return success(m);
-    }
-
-    // ================== 入口 B：sso 中转页（JSAPI 取 authCode → POST form 到 /dingtalk/login） ==================
+    // ================== 入口 A：sso 中转页（已登录快检 / JSAPI 取 authCode → POST 到 /login） ==================
 
     @Anonymous
     @GetMapping("/sso")
@@ -339,22 +270,6 @@ public class DingTalkLoginController extends BaseController
                 corpId == null || corpId.isEmpty() ? "(空，请配置 dingtalk.corp_id)" : corpId.substring(0, 3) + "***",
                 corpId == null ? 0 : corpId.length());
         return "dingtalk/sso";
-    }
-
-    // ================== 入口 C：登录成功中转页（极轻量 → 再异步跳首页，规避 WKWebView 超时） ==================
-
-    @Anonymous
-    @GetMapping("/dtok")
-    public String dtokPage(
-            @RequestParam(value = "go", required = false) String go,
-            HttpServletRequest request,
-            ModelMap mmap)
-    {
-        // 只允许站内路径（以 / 开头 且 不包含 // 协议跳转），防止开放重定向漏洞
-        String safeGo = safeRedirectPath(go);
-        mmap.put("go", safeGo);
-        log.info("[DingTalkDTok] 中转页加载，go={}", safeGo);
-        return "dingtalk/dtok";
     }
 
     // ================== 辅助：用户映射 + dingtalk_userid 绑定（JDBC 原生） ==================
@@ -440,6 +355,38 @@ public class DingTalkLoginController extends BaseController
     }
 
     private static String nvl(String s) { return s == null ? "" : s; }
+
+    // ================== 轻量限流（滑动窗口，仅内存，重启即清） ==================
+
+    /** 单 IP 窗口内的请求时间戳队列 */
+    private final java.util.Map<String, java.util.Deque<Long>> rateLimitMap = new java.util.concurrent.ConcurrentHashMap<>();
+
+    private static final int RATE_LIMIT_MAX = 10;          // 窗口内最大请求数
+    private static final long RATE_LIMIT_WINDOW_MS = 60_000L; // 窗口 60 秒
+
+    private boolean rateLimitAllow(HttpServletRequest request)
+    {
+        String ip = clientIp(request);
+        // 【花生壳/穿透兼容】内网穿透不转发真实 IP，所有外部用户在 Tomcat 看来都是 127.0.0.1，
+        // 按 IP 限流会把全员挤进一个桶 → 穿透流量（本机回环）直接放行，限流只针对直连外部 IP。
+        if ("127.0.0.1".equals(ip) || "0:0:0:0:0:0:0:1".equals(ip) || "localhost".equals(ip)) return true;
+        long now = System.currentTimeMillis();
+        java.util.Deque<Long> q = rateLimitMap.compute(ip, (k, v) -> v != null ? v : new java.util.concurrent.ConcurrentLinkedDeque<>());
+        // 清理过期时间戳 + 追加当前
+        while (!q.isEmpty() && now - q.peekFirst() > RATE_LIMIT_WINDOW_MS) q.pollFirst();
+        q.addLast(now);
+        // 防内存膨胀：IP 数量超过 1 万时整体清空（极端扫描场景，丢精度保内存）
+        if (rateLimitMap.size() > 10_000) rateLimitMap.clear();
+        return q.size() <= RATE_LIMIT_MAX;
+    }
+
+    private static String clientIp(HttpServletRequest request)
+    {
+        String xff = request.getHeader("x-forwarded-for");
+        if (StringUtils.isNotBlank(xff)) return xff.split(",")[0].trim();
+        return request.getRemoteAddr();
+    }
+
     private static String mask(String s)
     {
         if (StringUtils.isBlank(s)) return s;
@@ -452,12 +399,7 @@ public class DingTalkLoginController extends BaseController
         try { return java.net.URLEncoder.encode(s, "UTF-8"); }
         catch (java.io.UnsupportedEncodingException e) { return s; }
     }
-    private static String safeRedirect(String state)
-    {
-        return "redirect:" + safeRedirectPath(state);
-    }
-
-    /** 与 safeRedirect 逻辑相同，但只返回纯路径（不含 "redirect:" 前缀），用于 dtok 中转页的 go 参数透传 */
+    /** 站内路径白名单：以 / 开头且非 //（防开放重定向），空值默认 /index；用于 dtok 的 go 参数 */
     private static String safeRedirectPath(String state)
     {
         if (StringUtils.isBlank(state)) return "/index";
